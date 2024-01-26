@@ -39,6 +39,7 @@ class LoginPage extends StatelessWidget {
                   onChanged: (value) {
                     notifier.inputPassword(value);
                   },
+                  obscureText: true,
                   title: "パスワード",
                   hint: Dummy.passHint,
                 ),
@@ -78,10 +79,12 @@ class _LoginForm extends StatelessWidget {
       {super.key,
       required this.title,
       required this.hint,
-      required this.onChanged});
+      required this.onChanged,
+      this.obscureText = false});
   final ValueChanged<String> onChanged;
   final String title;
   final String hint;
+  final bool obscureText;
   final TextStyle essentialTextStyle = const TextStyle(color: Colors.red);
   @override
   Widget build(BuildContext context) {
@@ -104,6 +107,7 @@ class _LoginForm extends StatelessWidget {
               }
             },
             onChanged: onChanged,
+            obscureText: obscureText,
             decoration: InputDecoration(
                 hintText: hint,
                 border: OutlineInputBorder(
