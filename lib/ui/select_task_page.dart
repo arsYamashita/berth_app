@@ -11,7 +11,9 @@ class SelectTaskPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+      ),
       body: Container(
         width: SizeConfig.screenWidth,
         padding: EdgeInsets.symmetric(
