@@ -24,7 +24,7 @@ class ImportCsvController extends StateNotifier<ImportCsvState> {
 
   FilePickerResult? csvData;
 
-  void pickFile(BuildContext context) async {
+  void pickFile() async {
     // CSVをインポートする処理
     FilePickerResult? picResult = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -38,16 +38,24 @@ class ImportCsvController extends StateNotifier<ImportCsvState> {
     _inputFileName(picResult.files.single.name);
   }
 
-  void readCsvData() {
+  String getCsvText() {
+    if (this.csvData == null) {
+      return "";
+    }
+    final _csvBytes = this.csvData!.files.single.bytes;
+    return utf8.decode(_csvBytes!);
+  }
+
+  Future<CsvDataResult> readCsvData() {
     // CSVデータを読み込む処理
     if (this.csvData == null) {
-      return;
+      return Future.value(CsvDataResult());
     }
     final _csvBytes = this.csvData!.files.single.bytes;
     final _csvText = utf8.decode(_csvBytes!);
-
     final csvResult = CsvReader().getCsvDataResult(_csvText);
-    print('CSV: ${csvResult.csvData}, error: ${csvResult.errorMessages}');
+
+    return csvResult;
   }
 
   void _inputFileName(String fileName) {

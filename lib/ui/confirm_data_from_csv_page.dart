@@ -1,4 +1,7 @@
+import 'package:berth_app/controller/confirm_data_controller.dart';
+import 'package:berth_app/util/csv_reader.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../constant/dummy.dart';
 import '../model/reservation.dart';
@@ -30,29 +33,57 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
           horizontal: SizeConfig.blockSizeHorizontal * 20,
           vertical: SizeConfig.blockSizeVertical * 10,
         ),
-        child: Column(
-          children: [
-            InputedDataList(
-              datas: Dummy.reservationList,
-            ),
-            SizedBox(height: SizeConfig.blockSizeVertical * 10),
-            Text("上記${Dummy.reservationList.length}件のデータを登録します"),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _ConfirmButton(
-                  title: "キャンセル",
-                  onPressed: () {},
-                ),
-                _ConfirmButton(
-                  title: "登録する",
-                  isRegistration: true,
-                  onPressed: () {},
-                ),
-              ],
-            )
-          ],
-        ),
+        child: Consumer(builder: (context, ref, _) {
+          final notifier = ref.read(confirmDataProvider.notifier);
+          final state = ref.read(confirmDataProvider);
+          return FutureBuilder(
+              future: state,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final List<CsvData> csvData = snapshot.data!.csvData;
+
+                  if (snapshot.data!.errorMessages.isNotEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("エラーが発生しました"),
+                          SizedBox(height: SizeConfig.blockSizeVertical * 2),
+                          Text("エラー内容：${snapshot.data!.errorMessages}"),
+                        ],
+                      ),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      InputedDataList(
+                        datas: csvData,
+                      ),
+                      SizedBox(height: SizeConfig.blockSizeVertical * 10),
+                      Text("上記${csvData.length}件のデータを登録します"),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _ConfirmButton(
+                            title: "キャンセル",
+                            onPressed: () {},
+                          ),
+                          _ConfirmButton(
+                            title: "登録する",
+                            isRegistration: true,
+                            onPressed: () {
+                              notifier.readCSVData();
+                            },
+                          ),
+                        ],
+                      )
+                    ],
+                  );
+                } else {
+                  return Center(child: const CircularProgressIndicator());
+                }
+              });
+        }),
       ),
     );
   }
@@ -93,7 +124,7 @@ class InputedDataList extends StatelessWidget {
     super.key,
     required this.datas,
   });
-  final List<Reservation> datas;
+  final List<CsvData> datas;
 
   @override
   Widget build(BuildContext context) {
@@ -117,8 +148,9 @@ class InputedDataList extends StatelessWidget {
                       children: [
                         buildCellData(datas[index].date),
                         buildCellData(datas[index].time),
-                        buildCellData(datas[index].clientCD.toString()),
-                        buildCellData(datas[index].clientName),
+                        buildCellData(datas[index].userCode),
+                        buildCellData(datas[index].userName),
+                        buildCellData(datas[index].branchCode),
                         buildCellData(datas[index].deliveryPort),
                       ],
                     ),
@@ -131,7 +163,14 @@ class InputedDataList extends StatelessWidget {
   }
 
   Widget _listHeader() {
-    final List<String> headerLabels = ["日付", "時間", "取引先CD", "取引先名", "納品口"];
+    final List<String> headerLabels = [
+      "日付",
+      "時間",
+      "取引先CD",
+      "取引先名",
+      "拠点名",
+      "納品口"
+    ];
     final List<Widget> headerList = List.generate(
         headerLabels.length,
         (index) => Expanded(

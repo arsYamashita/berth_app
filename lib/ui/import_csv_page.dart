@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:berth_app/controller/confirm_data_controller.dart';
 import 'package:berth_app/controller/import_csv_controller.dart';
 import 'package:berth_app/ui/confirm_data_from_csv_page.dart';
 import 'package:berth_app/util/size_config.dart';
@@ -61,7 +62,14 @@ class _RegistrationButton extends StatelessWidget {
               ),
             ),
             onPressed: () {
-              notifier.readCsvData();
+              if (notifier.getCsvText().isEmpty) {
+                return;
+              }
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => ProviderScope(overrides: [
+                        confirmDataProvider.overrideWithProvider(
+                            confirmDataProviderFamily(notifier.getCsvText()))
+                      ], child: ConfirmDataFromCsvPage())));
             },
             child: Text("登録する"),
           );
@@ -114,7 +122,7 @@ class _ImportCsvWidget extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
-                    notifier.pickFile(context);
+                    notifier.pickFile();
                   },
                   child: Text("ファイルを選択"),
                 ),
