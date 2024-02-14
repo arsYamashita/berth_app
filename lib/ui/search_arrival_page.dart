@@ -54,9 +54,9 @@ class SearchArrivalPage extends StatelessWidget {
                 ],
               ),
             ),
-            InputedDataList(
-              datas: Dummy.reservationList,
-            )
+            // InputedDataList(
+            //   datas: Dummy.reservationList,
+            // )
           ],
         ),
       ),
