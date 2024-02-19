@@ -40,7 +40,7 @@ class SelectTaskPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const SearchArrivalPage()),
+                      builder: (context) => SearchArrivalPage()),
                 );
               },
             ),
