@@ -72,7 +72,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                             title: "登録する",
                             isRegistration: true,
                             onPressed: () {
-                              notifier.readCSVData();
+                              notifier.registerData();
                             },
                           ),
                         ],
