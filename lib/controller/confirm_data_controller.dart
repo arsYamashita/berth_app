@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../util/csv_reader.dart';
 
+
 final confirmDataProvider =
     StateNotifierProvider<ConfirmDataController, Future<CsvDataResult>>(
         (ref) => throw UnimplementedError());
@@ -66,8 +67,8 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
         'token':
             'ch-4IyvLhEipv4KnTXqG43:APA91bGR7w9kg7TcmBq4pVXMHvxUznLRgATrh0Eqg2OET8ZWCUKzGOUqoxaoWx55G_vM27kOPjazpotE6PoVf8NGJGQx_i5lON4l3RGAFrWryK0zqQCFhEcGqlX-4ZkEMd07paHR6hNb',
         'notification': {
-          'title': '新しい入荷予約が確定しました。',
-          'body': 'ボディ',
+          'title': '入荷コントロール',
+          'body': '新しい入荷予約が確定しました。',
         },
         'data': {
           'key1': 'value1',
