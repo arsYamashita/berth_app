@@ -4,6 +4,7 @@ class CsvReader {
   final CsvDataResult _csvDataResult = CsvDataResult();
   List<String> _fetchedUserIds = [];
   List<Branch> _fetchedBranch = [];
+  List<Reservation> _fetchReservation = [];
 
   Future<void> _fetchFirestoreData() async {
     final mFirestore = FirebaseFirestore.instance;
@@ -28,6 +29,23 @@ class CsvReader {
       );
       _fetchedBranch.add(branch);
     });
+    //予約情報を追加
+    final reservationSnapshot =
+        await mFirestore.collection('reservation').get();
+    reservationSnapshot.docs.forEach((doc) {
+      final date = doc['date'];
+      final time = doc['time'];
+      final branchCode = doc['branchCode'];
+      final deliveryPort = doc['deliveryPort'];
+
+      final reservation = Reservation(
+        date: date,
+        time: time,
+        branchCode: branchCode,
+        deliveryPort: deliveryPort,
+      );
+      _fetchReservation.add(reservation);
+    });
   }
 
   Future<CsvDataResult> getCsvDataResult(String csvText) async {
@@ -51,6 +69,11 @@ class CsvReader {
       if (await _csvValidation(i + 1, csvRowItems)) {
         return _csvDataResult;
       }
+      //データの重複がないか確認
+      if (_isDuplicateData(i + 1, csvRowItems)) {
+        return _csvDataResult;
+      }
+
       //userCodeからuserNameを取得
       final userDocSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -72,7 +95,41 @@ class CsvReader {
     return _csvDataResult;
   }
 
-  //データの重複がないか確認
+  //CSVファイルにデータの重複がないか確認
+  bool _isDuplicateData(int count, List<String> csvRowItems) {
+    final branchCode = csvRowItems[0];
+    final date = csvRowItems[1];
+    final time = csvRowItems[2];
+    final deliveryPort = csvRowItems[4];
+
+    //CSVファイルにデータの重複がないか確認
+    final isDuplicateInCsv = _csvDataResult.csvData
+        .where((csvData) =>
+            csvData.branchCode == branchCode &&
+            csvData.date == date &&
+            csvData.time == time &&
+            csvData.deliveryPort == deliveryPort)
+        .isNotEmpty;
+    if (isDuplicateInCsv) {
+      _csvDataResult.setErrorMessage('$count行目:CSVファイルに'
+          '重複データがあります。');
+      return true;
+    }
+    //Firestoreにデータの重複がないか確認
+    final isDuplicateInFirestore = _fetchReservation
+        .where((reservation) =>
+            reservation.branchCode == branchCode &&
+            reservation.date == date &&
+            reservation.time == time &&
+            reservation.deliveryPort == deliveryPort)
+        .isNotEmpty;
+    if (isDuplicateInFirestore) {
+      _csvDataResult.setErrorMessage('$count行目:Firestoreに'
+          '重複データがあります。');
+      return true;
+    }
+    return isDuplicateInCsv || isDuplicateInFirestore;
+  }
 
   //項目ごとのバリデーション
   Future<bool> _csvValidation(int count, List<String> csvRowItems) async {
@@ -256,4 +313,17 @@ class Branch {
     required this.branchCode,
     required this.deliveryPorts,
   });
+}
+
+class Reservation {
+  Reservation({
+    required this.date,
+    required this.time,
+    required this.branchCode,
+    required this.deliveryPort,
+  });
+  String date;
+  String time;
+  String branchCode;
+  String deliveryPort;
 }
