@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
         );
     }
   }
-
+  // ars
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyALtX2cGYh364HZtHv8lCoxMrEICyOtFlA',
     appId: '1:279365426275:web:c6f6c3d7513c2d519cec56',
@@ -61,4 +61,13 @@ class DefaultFirebaseOptions {
     storageBucket: 'berthapp-c3c59.appspot.com',
     measurementId: 'G-FWKBLVLC0Y',
   );
+  // bita
+  // static const FirebaseOptions web = FirebaseOptions(
+  //     apiKey: "AIzaSyAJrJTsl2uOG_4zZqqWaEkBOj9wSGuqSJY",
+  //     authDomain: "nohinctrl-test.firebaseapp.com",
+  //     projectId: "nohinctrl-test",
+  //     storageBucket: "nohinctrl-test.appspot.com",
+  //     messagingSenderId: "630263066288",
+  //     appId: "1:630263066288:web:39a54b3f82764355361575"
+  // );
 }
