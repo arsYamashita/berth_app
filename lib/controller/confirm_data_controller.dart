@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../util/csv_reader.dart';
 
-
 final confirmDataProvider =
     StateNotifierProvider<ConfirmDataController, Future<CsvDataResult>>(
         (ref) => throw UnimplementedError());
@@ -40,6 +39,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
         final uuid = Uuid().v4();
         mFirestore.collection('reservation').doc(uuid).set({
           'branchCode': data.csvData[i].branchCode,
+          'branchName': data.csvData[i].branchName,
           'date': data.csvData[i].date,
           'time': data.csvData[i].time,
           'userCode': data.csvData[i].userCode,
