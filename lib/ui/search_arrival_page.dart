@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 class DeliverySearchService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -10,8 +11,8 @@ class DeliverySearchService {
     DateTime? deliveryStartDate,
     DateTime? deliveryEndDate,
     String? branchCode,
-    TimeOfDay? deliveryStartTime,
-    TimeOfDay? deliveryEndTime,
+    String? deliveryStartTime,
+    String? deliveryEndTime,
     String? customerCode,
     String? deliveryPort,
   }) async {
@@ -27,6 +28,15 @@ class DeliverySearchService {
     if (branchCode != null) {
       query = query.where('branchCode', isEqualTo: branchCode);
     }
+    if (customerCode != null) {
+      query = query.where('userCode', isEqualTo: customerCode);
+    }
+
+    if (deliveryPort != null) {
+      query = query.where('deliveryPort', isEqualTo: deliveryPort);
+    }
+
+
     // 他の条件にも同様に対応
 
     // クエリを実行し、結果を取得
@@ -47,8 +57,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   DateTime? _deliveryStartDate;
   DateTime? _deliveryEndDate;
   String? _branchCode;
-  TimeOfDay? _deliveryStartTime;
-  TimeOfDay? _deliveryEndTime;
+  String? _deliveryStartTime;
+  String? _deliveryEndTime;
   String? _customerCode;
   String? _deliveryPort;
   List<DocumentSnapshot> _searchResults = [];
@@ -66,25 +76,16 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
           children: [
             Row(
               children: [
-                // 配送日
                 Container(
                   width: 80,
-                  child:
-                  Text('配送日'),
+                  child: Text('配送日'),
                 ),
                 Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0)),
+                  child: GestureDetector(
                     onTap: () async {
                       DateTime? selectedDate = await showDatePicker(
                         context: context,
-                        initialDate: DateTime.now(),
+                        initialDate: _deliveryStartDate ?? DateTime.now(),
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2101),
                       );
@@ -94,18 +95,29 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         });
                       }
                     },
+                    child: AbsorbPointer(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 0,
+                          ),
+                        ),
+                        controller: TextEditingController(
+                          text: _deliveryStartDate != null
+                              ? DateFormat('yyyyMMdd').format(_deliveryStartDate!)
+                              : '',
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 Text(' 〜 '),
                 Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0)),
+                  child: GestureDetector(
                     onTap: () async {
                       DateTime? selectedDate = await showDatePicker(
                         context: context,
@@ -119,60 +131,73 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         });
                       }
                     },
+                    child: AbsorbPointer(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 0,
+                          ),
+                        ),
+                        controller: TextEditingController(
+                          text: _deliveryEndDate != null
+                              ? DateFormat('yyyyMMdd').format(_deliveryEndDate!)
+                              : '',
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: 20),
                 Container(
                   width: 80,
-                  child:
-                  Text('センター'),
+                  child: Text('センター'),
                 ),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0)),
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 0,
+                      ),
+                    ),
                     onChanged: (value) {
                       setState(() {
                         _branchCode = value;
                       });
                     },
                   ),
-                )],
+                ),
+              ],
             ),
             SizedBox(height: 16.0),
             Row(
               children: [
-                // 配送日時
                 Container(
                   width: 80,
-                  child:
-                  Text('配送日時'),
+                  child: Text('配送日時'),
                 ),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0)),
-                    onTap: () async {
-                      TimeOfDay? selectedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-
-                      if (selectedTime != null) {
-                        setState(() {
-                          _deliveryStartTime = selectedTime;
-                        });
-                      }
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 0,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _deliveryStartTime = value;
+                      });
                     },
                   ),
                 ),
@@ -180,59 +205,55 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0)),
-                    onTap: () async {
-                      TimeOfDay? selectedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (selectedTime != null) {
-                        setState(() {
-                          _deliveryEndTime = selectedTime;
-                        });
-                      }
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 0,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _deliveryEndTime = value;
+                      });
                     },
                   ),
                 ),
                 SizedBox(width: 20),
-                // 納品口
                 Container(
                   width: 80,
-                  child:
-                  Text('納品口'),
+                  child: Text('納品口'),
                 ),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0)),
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 0,
+                      ),
+                    ),
                     onChanged: (value) {
                       setState(() {
                         _deliveryPort = value;
                       });
                     },
                   ),
-                )],
+                ),
+              ],
             ),
             SizedBox(height: 16.0),
             Row(
               children: [
-                // 取引先CD
                 Container(
-                  width: 80, // Set a fixed width
+                  width: 80,
                   child: Text('取引先CD'),
                 ),
                 Container(
-                  width: 150, // Adjust the width as needed
+                  width: 150,
                   child: TextField(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -254,7 +275,6 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
               ],
             ),
             SizedBox(height: 16.0),
-            // 検索ボタン
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -285,7 +305,6 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
               endIndent: 0,
               color: Colors.grey,
             ),
-            // 検索結果（幅一杯に表示）
             Expanded(
               child: _searchResults.isEmpty
                   ? Center(
@@ -300,7 +319,14 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
       ),
     );
   }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hours = time.hour.toString().padLeft(2, '0');
+    final minutes = time.minute.toString().padLeft(2, '0');
+    return '$hours:$minutes';
+  }
 }
+
 
 class DeliverySearchResultTable extends StatelessWidget {
   final List<dynamic> searchResults; // 仮の検索結果データ
