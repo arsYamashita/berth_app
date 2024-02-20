@@ -178,7 +178,7 @@ class CsvReader {
       errorMessage.write('日付が不正です。');
     } else if (!_isValidTime(csvRowItems[2])) {
       errorMessage.write('時間が不正です。');
-    } else if (userCode.length != 9 || int.tryParse(userCode) == null) {
+    } else if (userCode.length != 6 || int.tryParse(userCode) == null) {
       errorMessage.write('取引先CDが不正です。');
     } else if (!existsUserCode) {
       errorMessage.write('取引先CDが存在しません。');
