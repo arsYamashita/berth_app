@@ -7,13 +7,14 @@ class CsvReader {
   List<Reservation> _fetchReservation = [];
 
   Future<void> _fetchFirestoreData() async {
+    const undefinedString = 'undefined';
     final mFirestore = FirebaseFirestore.instance;
 
     // user情報を追加
     final userSnapshot = await mFirestore.collection('users').get();
     userSnapshot.docs.forEach((doc) {
       final userCode = doc.id;
-      final userName = doc['name'] ?? '';
+      final userName = doc.data()?['name'] ?? undefinedString;
 
       final companyUser = CompanyUser(
         userCode: userCode,
@@ -26,9 +27,9 @@ class CsvReader {
     final branchSnapshot = await mFirestore.collection('branch').get();
     branchSnapshot.docs.forEach((doc) {
       final branchCode = doc.id;
-      final branchName = doc['branchName'] ?? '';
-      final deliveryPorts = List<String>.from(
-          (doc.data() as Map<String, dynamic>)['deliveryPorts'] ?? []);
+      final branchName = doc.data()?['branchName'] ?? undefinedString;
+      final deliveryPorts =
+          List<String>.from(doc.data()?['deliveryPorts'] ?? []);
 
       final branch = Branch(
         branchCode: branchCode,
@@ -41,10 +42,10 @@ class CsvReader {
     final reservationSnapshot =
         await mFirestore.collection('reservation').get();
     reservationSnapshot.docs.forEach((doc) {
-      final date = doc['date'];
-      final time = doc['time'];
-      final branchCode = doc['branchCode'];
-      final deliveryPort = doc['deliveryPort'];
+      final date = doc.data()?['date'] ?? undefinedString;
+      final time = doc.data()?['time'] ?? undefinedString;
+      final branchCode = doc.data()?['branchCode'] ?? undefinedString;
+      final deliveryPort = doc.data()?['deliveryPort'] ?? undefinedString;
 
       final reservation = Reservation(
         date: date,
@@ -92,8 +93,6 @@ class CsvReader {
           .where((branch) => branch.branchCode == csvRowItems[0])
           .first
           .branchName;
-
-      print(userName);
 
       final csvData = CsvData(
         branchCode: csvRowItems[0],
