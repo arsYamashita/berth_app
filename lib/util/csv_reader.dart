@@ -2,29 +2,38 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CsvReader {
   final CsvDataResult _csvDataResult = CsvDataResult();
-  List<String> _fetchedUserIds = [];
+  List<CompanyUser> _fetchedUserIds = [];
   List<Branch> _fetchedBranch = [];
   List<Reservation> _fetchReservation = [];
 
   Future<void> _fetchFirestoreData() async {
+    const undefinedString = 'undefined';
     final mFirestore = FirebaseFirestore.instance;
 
     // user情報を追加
     final userSnapshot = await mFirestore.collection('users').get();
     userSnapshot.docs.forEach((doc) {
       final userCode = doc.id;
-      _fetchedUserIds.add(userCode);
+      final userName = doc.data()?['name'] ?? undefinedString;
+
+      final companyUser = CompanyUser(
+        userCode: userCode,
+        userName: userName,
+      );
+      _fetchedUserIds.add(companyUser);
     });
 
     // 拠点情報を追加
     final branchSnapshot = await mFirestore.collection('branch').get();
     branchSnapshot.docs.forEach((doc) {
       final branchCode = doc.id;
-      final deliveryPorts = List<String>.from(
-          (doc.data() as Map<String, dynamic>)['deliveryPorts'] ?? []);
+      final branchName = doc.data()?['branchName'] ?? undefinedString;
+      final deliveryPorts =
+          List<String>.from(doc.data()?['deliveryPorts'] ?? []);
 
       final branch = Branch(
         branchCode: branchCode,
+        branchName: branchName,
         deliveryPorts: deliveryPorts,
       );
       _fetchedBranch.add(branch);
@@ -33,10 +42,10 @@ class CsvReader {
     final reservationSnapshot =
         await mFirestore.collection('reservation').get();
     reservationSnapshot.docs.forEach((doc) {
-      final date = doc['date'];
-      final time = doc['time'];
-      final branchCode = doc['branchCode'];
-      final deliveryPort = doc['deliveryPort'];
+      final date = doc.data()?['date'] ?? undefinedString;
+      final time = doc.data()?['time'] ?? undefinedString;
+      final branchCode = doc.data()?['branchCode'] ?? undefinedString;
+      final deliveryPort = doc.data()?['deliveryPort'] ?? undefinedString;
 
       final reservation = Reservation(
         date: date,
@@ -75,14 +84,19 @@ class CsvReader {
       }
 
       //userCodeからuserNameを取得
-      final userDocSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(csvRowItems[3])
-          .get();
-      final userName = userDocSnapshot['name'];
+      final userName = _fetchedUserIds
+          .where((user) => user.userCode == csvRowItems[3])
+          .first
+          .userName;
+      //branchCodeからbranchNameを取得
+      final branchName = _fetchedBranch
+          .where((branch) => branch.branchCode == csvRowItems[0])
+          .first
+          .branchName;
 
       final csvData = CsvData(
         branchCode: csvRowItems[0],
+        branchName: branchName,
         date: csvRowItems[1],
         time: csvRowItems[2],
         userCode: csvRowItems[3],
@@ -139,7 +153,8 @@ class CsvReader {
     final userCode = csvRowItems[3];
     final deliveryPort = csvRowItems[4];
 
-    final existsUserCode = _fetchedUserIds.contains(userCode);
+    final existsUserCode =
+        _fetchedUserIds.where((user) => user.userCode == userCode).isNotEmpty;
     final existsBranchCode = _fetchedBranch
         .where((branch) => branch.branchCode == branchCode)
         .isNotEmpty;
@@ -289,6 +304,7 @@ class CsvDataResult {
 //csv格納用のクラス
 class CsvData {
   final String branchCode;
+  final String branchName;
   final String date;
   final String time;
   final String userCode;
@@ -297,6 +313,7 @@ class CsvData {
 
   CsvData({
     required this.branchCode,
+    required this.branchName,
     required this.date,
     required this.time,
     required this.userCode,
@@ -307,11 +324,13 @@ class CsvData {
 
 class Branch {
   final String branchCode;
+  final String branchName;
   final List<String> deliveryPorts;
 
   Branch({
     required this.branchCode,
     required this.deliveryPorts,
+    required this.branchName,
   });
 }
 
@@ -326,4 +345,14 @@ class Reservation {
   String time;
   String branchCode;
   String deliveryPort;
+}
+
+class CompanyUser {
+  final String userCode;
+  final String userName;
+
+  CompanyUser({
+    required this.userCode,
+    required this.userName,
+  });
 }
