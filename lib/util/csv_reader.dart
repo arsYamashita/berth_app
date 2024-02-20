@@ -70,8 +70,8 @@ class CsvReader {
       _csvDataResult.setErrorMessage('CSVファイルが空です');
       return _csvDataResult;
     }
-
-    for (int i = 0; i < lines.length; i++) {
+    //1行目を無視する
+    for (int i = 1; i < lines.length; i++) {
       //改行コードを削除
       List<String> csvRowItems = lines[i].replaceAll('\r', '').split(',');
       //項目ごとのバリデーション
@@ -178,7 +178,7 @@ class CsvReader {
       errorMessage.write('日付が不正です。');
     } else if (!_isValidTime(csvRowItems[2])) {
       errorMessage.write('時間が不正です。');
-    } else if (userCode.length != 9 || int.tryParse(userCode) == null) {
+    } else if (userCode.length != 6 || int.tryParse(userCode) == null) {
       errorMessage.write('取引先CDが不正です。');
     } else if (!existsUserCode) {
       errorMessage.write('取引先CDが存在しません。');
