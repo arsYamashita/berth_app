@@ -42,7 +42,10 @@ class CsvReader {
     final reservationSnapshot =
         await mFirestore.collection('reservation').get();
     reservationSnapshot.docs.forEach((doc) {
-      final date = doc.data()?['date'] ?? undefinedString;
+      Timestamp fetchedDate =
+          doc.data()?['date'] ?? Timestamp.fromDate(DateTime(2000, 1, 1));
+      //Timestamp型をDateTime型に変換
+      final DateTime date = fetchedDate.toDate();
       final time = doc.data()?['time'] ?? undefinedString;
       final branchCode = doc.data()?['branchCode'] ?? undefinedString;
       final deliveryPort = doc.data()?['deliveryPort'] ?? undefinedString;
@@ -97,7 +100,7 @@ class CsvReader {
       final csvData = CsvData(
         branchCode: csvRowItems[0],
         branchName: branchName,
-        date: csvRowItems[1],
+        date: DateTime.parse(csvRowItems[1]),
         time: csvRowItems[2],
         userCode: csvRowItems[3],
         deliveryPort: csvRowItems[4],
@@ -112,7 +115,7 @@ class CsvReader {
   //CSVファイルにデータの重複がないか確認
   bool _isDuplicateData(int count, List<String> csvRowItems) {
     final branchCode = csvRowItems[0];
-    final date = csvRowItems[1];
+    final date = DateTime.parse(csvRowItems[1]);
     final time = csvRowItems[2];
     final deliveryPort = csvRowItems[4];
 
@@ -305,7 +308,7 @@ class CsvDataResult {
 class CsvData {
   final String branchCode;
   final String branchName;
-  final String date;
+  final DateTime date;
   final String time;
   final String userCode;
   final String userName;
@@ -341,7 +344,7 @@ class Reservation {
     required this.branchCode,
     required this.deliveryPort,
   });
-  String date;
+  DateTime date;
   String time;
   String branchCode;
   String deliveryPort;

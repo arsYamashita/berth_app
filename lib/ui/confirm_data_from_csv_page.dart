@@ -2,6 +2,7 @@ import 'package:berth_app/controller/confirm_data_controller.dart';
 import 'package:berth_app/util/csv_reader.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../constant/dummy.dart';
 import '../model/reservation.dart';
@@ -146,7 +147,8 @@ class InputedDataList extends StatelessWidget {
                     )),
                     child: Row(
                       children: [
-                        buildCellData(datas[index].date),
+                        buildCellData(
+                            DateFormat("yyyyMMdd").format(datas[index].date)),
                         buildCellData(datas[index].time),
                         buildCellData(datas[index].userCode),
                         buildCellData(datas[index].userName),
