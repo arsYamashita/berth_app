@@ -16,37 +16,60 @@ class DeliverySearchService {
     String? customerCode,
     String? deliveryPort,
   }) async {
-    Query query = _firestore.collection('reservation');
+    Query dateQuery = _firestore.collection('reservation');
+    Query timeQuery = _firestore.collection('reservation');
 
-    // 必要に応じて、条件に基づいてクエリを構築
-    if (deliveryStartDate != null) {
-      query = query.where('deliveryStartDate', isEqualTo: deliveryStartDate);
-    }
-    if (deliveryEndDate != null) {
-      query = query.where('deliveryEndDate', isEqualTo: deliveryEndDate);
-    }
-    if (branchCode != null) {
-      query = query.where('branchCode', isEqualTo: branchCode);
-    }
-    if (customerCode != null) {
-      query = query.where('userCode', isEqualTo: customerCode);
-    }
+    // deliveryStartDateとdeliveryEndDateの間の日付のデータを取得
+    if (deliveryStartDate != null && deliveryEndDate != null) {
+      Timestamp formattedStartDate = Timestamp.fromDate(deliveryStartDate);
+      Timestamp formattedEndDate = Timestamp.fromDate(deliveryEndDate);
 
-    if (deliveryPort != null) {
-      query = query.where('deliveryPort', isEqualTo: deliveryPort);
+      dateQuery = dateQuery.where('date', isGreaterThanOrEqualTo: formattedStartDate);
+      dateQuery = dateQuery.where('date', isLessThanOrEqualTo: formattedEndDate);
     }
-
 
     // 他の条件にも同様に対応
+    if (branchCode != null) {
+      dateQuery = dateQuery.where('branchCode', isEqualTo: branchCode);
+    }
+    if (customerCode != null) {
+      dateQuery = dateQuery.where('userCode', isEqualTo: customerCode);
+    }
+    if (deliveryPort != null) {
+      dateQuery = dateQuery.where('deliveryPort', isEqualTo: deliveryPort);
+    }
 
     // クエリを実行し、結果を取得
-    QuerySnapshot querySnapshot = await query.get();
+    QuerySnapshot dateQuerySnapshot = await dateQuery.get();
 
-    // 結果をリストとして返す
-    return querySnapshot.docs;
+    // deliveryStartTimeとdeliveryEndTimeの間の時間のデータを取得
+    if (deliveryStartTime != null && deliveryEndTime != null) {
+      timeQuery = timeQuery.where('time', isGreaterThanOrEqualTo: deliveryStartTime);
+      timeQuery = timeQuery.where('time', isLessThanOrEqualTo: deliveryEndTime);
+    } else if (deliveryStartTime != null) {
+      timeQuery = timeQuery.where('time', isGreaterThanOrEqualTo: deliveryStartTime);
+    } else if (deliveryEndTime != null) {
+      timeQuery = timeQuery.where('time', isLessThanOrEqualTo: deliveryEndTime);
+    }
+
+    // クエリを実行し、結果を取得
+    QuerySnapshot timeQuerySnapshot = await timeQuery.get();
+
+    // 結果を結合してリストとして返す
+    List<DocumentSnapshot> resultSet = [];
+
+    for (var dateDoc in dateQuerySnapshot.docs) {
+      for (var timeDoc in timeQuerySnapshot.docs) {
+        if (dateDoc.id == timeDoc.id) {
+          resultSet.add(dateDoc);
+          break;
+        }
+      }
+    }
+
+    return resultSet;
   }
 }
-
 class SearchArrivalPage extends StatefulWidget {
   @override
   _SearchArrivalPageState createState() => _SearchArrivalPageState();
@@ -280,18 +303,25 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    List<DocumentSnapshot> results = await deliverySearchService.searchDeliveries(
-                      deliveryStartDate: _deliveryStartDate,
-                      deliveryEndDate: _deliveryEndDate,
-                      branchCode: _branchCode,
-                      deliveryStartTime: _deliveryStartTime,
-                      deliveryEndTime: _deliveryEndTime,
-                      customerCode: _customerCode,
-                      deliveryPort: _deliveryPort,
-                    );
-                    setState(() {
-                      _searchResults = results;
-                    });
+                    if (_deliveryStartDate != null && _deliveryEndDate != null) {
+                      List<
+                          DocumentSnapshot> results = await deliverySearchService
+                          .searchDeliveries(
+                        deliveryStartDate: _deliveryStartDate,
+                        deliveryEndDate: _deliveryEndDate,
+                        branchCode: _branchCode,
+                        deliveryStartTime: _deliveryStartTime,
+                        deliveryEndTime: _deliveryEndTime,
+                        customerCode: _customerCode,
+                        deliveryPort: _deliveryPort,
+                      );
+                      setState(() {
+                        _searchResults = results;
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text("開始日と終了日は必須項目です")));
+                    }
                   },
                   child: Text('検索'),
                 ),
@@ -385,12 +415,19 @@ class DeliverySearchResultTable extends StatelessWidget {
               searchResults.length,
                   (index) {
                 Map<String, dynamic> deliveryData = searchResults[index].data() as Map<String, dynamic>;
+                Timestamp timestamp = deliveryData['date'] as Timestamp;
+
+// Timestamp型をDateTime型に変換
+                    DateTime dateTime = deliveryData['date'].toDate();
+
+// DateTime型を'yyyyMMdd'形式の文字列にフォーマット
+                    String formattedDate = DateFormat('yyyyMMdd').format(dateTime);
                 return DataRow(
                   cells: [
                     DataCell(
                       SizedBox(
                         width: 100, // 列の幅を設定
-                        child: Text(deliveryData['date'].toString()),
+                        child: Text(formattedDate),
                       ),
                     ),
                     DataCell(
