@@ -73,6 +73,13 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                             title: "登録する",
                             isRegistration: true,
                             onPressed: () {
+                              // notifier.registerData();
+                              showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) {
+                                    return _RegistrationDialog();
+                                  });
                               notifier.registerData();
                             },
                           ),
@@ -190,5 +197,39 @@ class InputedDataList extends StatelessWidget {
 
   Expanded buildCellData(String title) {
     return Expanded(child: Center(child: Text(title)));
+  }
+}
+
+class _RegistrationDialog extends ConsumerWidget {
+  const _RegistrationDialog({super.key});
+
+  @override
+  Widget build(BuildContext context, ref) {
+    final dialogState = ref.watch(dialogStateProvider);
+
+    return AlertDialog(
+      title: Text(dialogState.isLoading ? "登録中" : "登録完了"),
+      content: ref.watch(dialogStateProvider).when(
+        data: (value) {
+          return const Text("登録されました。");
+        },
+        loading: () {
+          return const SizedBox(width: 100, child: LinearProgressIndicator());
+        },
+        error: (error, stack) {
+          return Text("エラーが発生しました: ${error.toString()}");
+        },
+      ),
+      actions: [
+        dialogState.isLoading
+            ? SizedBox()
+            : ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text("OK"),
+              ),
+      ],
+    );
   }
 }
