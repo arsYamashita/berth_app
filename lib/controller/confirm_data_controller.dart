@@ -60,7 +60,6 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
             'branchCode': data.csvData[i].branchCode,
             'branchName': data.csvData[i].branchName,
             'date': data.csvData[i].date,
-            'time': data.csvData[i].time,
             'userCode': data.csvData[i].userCode,
             'deliveryPort': data.csvData[i].deliveryPort,
             'userName': data.csvData[i].userName,

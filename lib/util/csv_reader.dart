@@ -52,7 +52,6 @@ class CsvReader {
 
       final reservation = Reservation(
         date: date,
-        time: time,
         branchCode: branchCode,
         deliveryPort: deliveryPort,
       );
@@ -81,10 +80,6 @@ class CsvReader {
       if (await _csvValidation(i + 1, csvRowItems)) {
         return _csvDataResult;
       }
-      //データの重複がないか確認
-      if (_isDuplicateData(i + 1, csvRowItems)) {
-        return _csvDataResult;
-      }
 
       //userCodeからuserNameを取得
       final userName = _fetchedUserIds
@@ -100,12 +95,17 @@ class CsvReader {
       final csvData = CsvData(
         branchCode: csvRowItems[0],
         branchName: branchName,
-        date: DateTime.parse(csvRowItems[1]),
-        time: csvRowItems[2],
+        //日付と時間ををDateTime型に変換
+        date: _parseDateTime(csvRowItems[1], csvRowItems[2]),
         userCode: csvRowItems[3],
         deliveryPort: csvRowItems[4],
         userName: userName,
       );
+      print(csvData.date);
+      //データの重複がないか確認
+      if (_isDuplicateData(i + 1, csvData)) {
+        return _csvDataResult;
+      }
 
       _csvDataResult.addCsvData(csvData);
     }
@@ -113,18 +113,16 @@ class CsvReader {
   }
 
   //CSVファイルにデータの重複がないか確認
-  bool _isDuplicateData(int count, List<String> csvRowItems) {
-    final branchCode = csvRowItems[0];
-    final date = DateTime.parse(csvRowItems[1]);
-    final time = csvRowItems[2];
-    final deliveryPort = csvRowItems[4];
+  bool _isDuplicateData(int count, CsvData csv) {
+    final branchCode = csv.branchCode;
+    final date = csv.date;
+    final deliveryPort = csv.deliveryPort;
 
     //CSVファイルにデータの重複がないか確認
     final isDuplicateInCsv = _csvDataResult.csvData
         .where((csvData) =>
             csvData.branchCode == branchCode &&
             csvData.date == date &&
-            csvData.time == time &&
             csvData.deliveryPort == deliveryPort)
         .isNotEmpty;
     if (isDuplicateInCsv) {
@@ -137,7 +135,6 @@ class CsvReader {
         .where((reservation) =>
             reservation.branchCode == branchCode &&
             reservation.date == date &&
-            reservation.time == time &&
             reservation.deliveryPort == deliveryPort)
         .isNotEmpty;
     if (isDuplicateInFirestore) {
@@ -286,6 +283,26 @@ class CsvReader {
 
     return true;
   }
+
+  DateTime _parseDateTime(String date, String time) {
+    // 文字列を年、月、日、時間の部分に分割します
+
+    // 年、月、日を抽出します
+    int year = int.parse(date.substring(0, 4));
+    int month = int.parse(date.substring(4, 6));
+    int day = int.parse(date.substring(6, 8));
+
+    // 時間を抽出します
+    List<String> timeParts = time.split(':');
+    int hour = int.parse(timeParts[0]);
+    int minute = 0; // ミリ秒の部分がない場合、デフォルトで0にします
+    if (timeParts.length > 1) {
+      minute = int.parse(timeParts[1]);
+    }
+
+    // DateTimeオブジェクトを作成して返します
+    return DateTime(year, month, day, hour, minute);
+  }
 }
 
 //エラー内容とCSVデータの各行を保持するクラス
@@ -309,7 +326,6 @@ class CsvData {
   final String branchCode;
   final String branchName;
   final DateTime date;
-  final String time;
   final String userCode;
   final String userName;
   final String deliveryPort;
@@ -318,7 +334,6 @@ class CsvData {
     required this.branchCode,
     required this.branchName,
     required this.date,
-    required this.time,
     required this.userCode,
     required this.userName,
     required this.deliveryPort,
@@ -340,12 +355,10 @@ class Branch {
 class Reservation {
   Reservation({
     required this.date,
-    required this.time,
     required this.branchCode,
     required this.deliveryPort,
   });
   DateTime date;
-  String time;
   String branchCode;
   String deliveryPort;
 }
