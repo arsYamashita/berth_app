@@ -56,7 +56,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
       for (int i = 0; i < data.csvData.length; i++) {
         final uuid = Uuid().v4();
         try {
-          mFirestore.collection('reservation').doc(uuid).set({
+          await mFirestore.collection('reservation').doc(uuid).set({
             'branchCode': data.csvData[i].branchCode,
             'branchName': data.csvData[i].branchName,
             'date': data.csvData[i].date,
