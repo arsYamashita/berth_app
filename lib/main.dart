@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
     SizeConfig().init(context);
 
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: '納品コントロール',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

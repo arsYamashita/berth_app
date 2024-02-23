@@ -1,5 +1,6 @@
 import 'package:berth_app/ui/search_arrival_page.dart';
 import 'package:berth_app/util/size_config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'import_csv_page.dart';
@@ -12,6 +13,15 @@ class SelectTaskPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () async {
+              // ログアウト処理
+              await FirebaseAuth.instance.signOut();
+            },
+          ),
+        ],
         automaticallyImplyLeading: false,
       ),
       body: Container(

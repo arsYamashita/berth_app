@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../util/csv_reader.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 //ダイアログ用プロバイダー
 final dialogStateProvider = StateProvider<AsyncValue<void>>(
@@ -78,15 +79,24 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
   }
 
   Future<void> sendFCMNotification() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    String? token = await user?.getIdToken();
+
+    if (token == null) {
+      return;
+    }
+    print('token: $token');
+
     // FCMサーバーへのエンドポイントURL
     final url = Uri.parse(
         'https://fcm.googleapis.com/v1/projects/berthapp-c3c59/messages:send');
 
     // HTTPリクエストヘッダー
     final headers = {
-      'Authorization': 'AIzaSyC1J2lOjae45Dfm8NL1npSjEfgUhPC2Dfg',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     };
+
 
     // 送信するメッセージデータ
     final messageData = {
