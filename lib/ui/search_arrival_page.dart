@@ -1,76 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 class DeliverySearchService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<List<DocumentSnapshot>> searchDeliveries({
-    DateTime? deliveryStartDate,
-    DateTime? deliveryEndDate,
-    String? branchCode,
+    required String deliveryStartDate,
+    required String deliveryEndDate,
     String? deliveryStartTime,
     String? deliveryEndTime,
-    String? customerCode,
+    String? branchCode,
+    String? userCode,
     String? deliveryPort,
   }) async {
     Query dateQuery = _firestore.collection('reservation');
-    Query timeQuery = _firestore.collection('reservation');
 
     // deliveryStartDateとdeliveryEndDateの間の日付のデータを取得
-    if (deliveryStartDate != null && deliveryEndDate != null) {
-      Timestamp formattedStartDate = Timestamp.fromDate(deliveryStartDate);
-      Timestamp formattedEndDate = Timestamp.fromDate(deliveryEndDate);
+    if (deliveryStartDate.isNotEmpty && deliveryEndDate.isNotEmpty) {
+      DateTime startDate = DateTime.parse(deliveryStartDate);
+      DateTime endDate = DateTime.parse(deliveryEndDate).add(const Duration(days: 1));
+
+      Timestamp formattedStartDate = Timestamp.fromDate(startDate);
+      Timestamp formattedEndDate = Timestamp.fromDate(endDate);
 
       dateQuery = dateQuery.where('date', isGreaterThanOrEqualTo: formattedStartDate);
-      dateQuery = dateQuery.where('date', isLessThanOrEqualTo: formattedEndDate);
-    }
-
-    // 他の条件にも同様に対応
-    if (branchCode != null) {
-      dateQuery = dateQuery.where('branchCode', isEqualTo: branchCode);
-    }
-    if (customerCode != null) {
-      dateQuery = dateQuery.where('userCode', isEqualTo: customerCode);
-    }
-    if (deliveryPort != null) {
-      dateQuery = dateQuery.where('deliveryPort', isEqualTo: deliveryPort);
+      dateQuery = dateQuery.where('date', isLessThan: formattedEndDate);
     }
 
     // クエリを実行し、結果を取得
     QuerySnapshot dateQuerySnapshot = await dateQuery.get();
 
-    // deliveryStartTimeとdeliveryEndTimeの間の時間のデータを取得
-    if (deliveryStartTime != null && deliveryEndTime != null) {
-      timeQuery = timeQuery.where('time', isGreaterThanOrEqualTo: deliveryStartTime);
-      timeQuery = timeQuery.where('time', isLessThanOrEqualTo: deliveryEndTime);
-    } else if (deliveryStartTime != null) {
-      timeQuery = timeQuery.where('time', isGreaterThanOrEqualTo: deliveryStartTime);
-    } else if (deliveryEndTime != null) {
-      timeQuery = timeQuery.where('time', isLessThanOrEqualTo: deliveryEndTime);
+    List<DocumentSnapshot> resultSet = dateQuerySnapshot.docs;
+
+    if (deliveryStartTime != null && deliveryEndTime != null && deliveryStartTime.isNotEmpty && deliveryEndTime.isNotEmpty) {
+      resultSet = resultSet.where((doc) {
+        Timestamp docDateTime = doc['date'];
+        DateTime startTime = DateTime.parse("2000-01-01 ${deliveryStartTime.padLeft(5, '0')}");
+        DateTime endTime = DateTime.parse("2000-01-01 ${deliveryEndTime.padLeft(5, '0')}");
+        DateTime docTime = docDateTime.toDate();
+        // 年月日は無視して、時分だけを比較
+        DateTime docTimeOnlyHourMinute = DateTime(2000, 1, 1, docTime.hour, docTime.minute);
+        return startTime.isBefore(docTimeOnlyHourMinute) || startTime.isAtSameMomentAs(docTimeOnlyHourMinute) &&
+            endTime.isAfter(docTimeOnlyHourMinute) || endTime.isAtSameMomentAs(docTimeOnlyHourMinute);
+      }).toList();
+    } else if (deliveryStartTime != null && deliveryStartTime.isNotEmpty) {
+      resultSet = resultSet.where((doc) {
+        Timestamp docDateTime = doc['date'];
+        DateTime startTime = DateTime.parse("2000-01-01 ${deliveryStartTime.padLeft(5, '0')}");
+        DateTime docTime = docDateTime.toDate();
+        // 年月日は無視して、時分だけを比較
+        DateTime docTimeOnlyHourMinute = DateTime(2000, 1, 1, docTime.hour, docTime.minute);
+        return startTime.isBefore(docTimeOnlyHourMinute) || startTime.isAtSameMomentAs(docTimeOnlyHourMinute);
+      }).toList();
+    } else if (deliveryEndTime != null && deliveryEndTime.isNotEmpty) {
+      resultSet = resultSet.where((doc) {
+        Timestamp docDateTime = doc['date'];
+        DateTime endTime = DateTime.parse("2000-01-01 ${deliveryEndTime.padLeft(5, '0')}");
+        DateTime docTime = docDateTime.toDate();
+        // 年月日は無視して、時分だけを比較
+        DateTime docTimeOnlyHourMinute = DateTime(2000, 1, 1, docTime.hour, docTime.minute);
+        return endTime.isAfter(docTimeOnlyHourMinute) || endTime.isAtSameMomentAs(docTimeOnlyHourMinute);
+      }).toList();
     }
 
-    // クエリを実行し、結果を取得
-    QuerySnapshot timeQuerySnapshot = await timeQuery.get();
 
-    // 結果を結合してリストとして返す
-    List<DocumentSnapshot> resultSet = [];
+    // 他の条件にも同様に対応
+    if (branchCode != null && branchCode.isNotEmpty) {
+      // dateQuery = dateQuery.where('branchCode', isEqualTo: branchCode);
 
-    for (var dateDoc in dateQuerySnapshot.docs) {
-      for (var timeDoc in timeQuerySnapshot.docs) {
-        if (dateDoc.id == timeDoc.id) {
-          resultSet.add(dateDoc);
-          break;
-        }
-      }
+      resultSet = resultSet.where((doc) {
+        String docBranchCode = doc['branchCode'];
+        return branchCode == docBranchCode;
+      }).toList();
+    }
+    if (userCode != null && userCode.isNotEmpty) {
+      // dateQuery = dateQuery.where('userCode', isEqualTo: userCode);
+      resultSet = resultSet.where((doc) {
+        String docUserCode = doc['userCode'];
+        return userCode == docUserCode;
+      }).toList();
+    }
+    if (deliveryPort != null && deliveryPort.isNotEmpty) {
+      // dateQuery = dateQuery.where('deliveryPort', isEqualTo: deliveryPort);
+      resultSet = resultSet.where((doc) {
+        String docDeliveryPort = doc['deliveryPort'];
+        return deliveryPort == docDeliveryPort;
+      }).toList();
     }
 
     return resultSet;
   }
 }
 class SearchArrivalPage extends StatefulWidget {
+  // コンストラクタに key パラメータを追加
+  const SearchArrivalPage({super.key});
+
   @override
   _SearchArrivalPageState createState() => _SearchArrivalPageState();
 }
@@ -82,7 +107,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   String? _branchCode;
   String? _deliveryStartTime;
   String? _deliveryEndTime;
-  String? _customerCode;
+  String? _userCode;
   String? _deliveryPort;
   List<DocumentSnapshot> _searchResults = [];
 
@@ -90,16 +115,16 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('納品指定内容確認'),
+        title: const Text('納品指定内容確認'),
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(
+                const SizedBox(
                   width: 80,
                   child: Text('配送日'),
                 ),
@@ -138,7 +163,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                     ),
                   ),
                 ),
-                Text(' 〜 '),
+                const Text(' 〜 '),
                 Expanded(
                   child: GestureDetector(
                     onTap: () async {
@@ -174,8 +199,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                     ),
                   ),
                 ),
-                SizedBox(width: 20),
-                Container(
+                const SizedBox(width: 20),
+                const SizedBox(
                   width: 80,
                   child: Text('センター'),
                 ),
@@ -199,10 +224,10 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             Row(
               children: [
-                Container(
+                const SizedBox(
                   width: 80,
                   child: Text('配送日時'),
                 ),
@@ -224,7 +249,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                     },
                   ),
                 ),
-                Text(' 〜 '),
+                const Text(' 〜 '),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
@@ -243,8 +268,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                     },
                   ),
                 ),
-                SizedBox(width: 20),
-                Container(
+                const SizedBox(width: 20),
+                const SizedBox(
                   width: 80,
                   child: Text('納品口'),
                 ),
@@ -268,14 +293,14 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             Row(
               children: [
-                Container(
+                const SizedBox(
                   width: 80,
                   child: Text('取引先CD'),
                 ),
-                Container(
+                SizedBox(
                   width: 150,
                   child: TextField(
                     decoration: InputDecoration(
@@ -290,14 +315,14 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                     ),
                     onChanged: (value) {
                       setState(() {
-                        _customerCode = value;
+                        _userCode = value;
                       });
                     },
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -307,12 +332,12 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                       List<
                           DocumentSnapshot> results = await deliverySearchService
                           .searchDeliveries(
-                        deliveryStartDate: _deliveryStartDate,
-                        deliveryEndDate: _deliveryEndDate,
+                        deliveryStartDate: _deliveryStartDate.toString(),
+                        deliveryEndDate: _deliveryEndDate.toString(),
                         branchCode: _branchCode,
                         deliveryStartTime: _deliveryStartTime,
                         deliveryEndTime: _deliveryEndTime,
-                        customerCode: _customerCode,
+                        userCode: _userCode,
                         deliveryPort: _deliveryPort,
                       );
                       setState(() {
@@ -320,14 +345,14 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                       });
                     } else {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text("開始日と終了日は必須項目です")));
+                          .showSnackBar(const SnackBar(content: Text("開始日と終了日は必須項目です")));
                     }
                   },
-                  child: Text('検索'),
+                  child: const Text('検索'),
                 ),
               ],
             ),
-            SizedBox(height: 16.0),
+            const SizedBox(height: 16.0),
             const Divider(
               height: 50,
               thickness: 5,
@@ -337,7 +362,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
             ),
             Expanded(
               child: _searchResults.isEmpty
-                  ? Center(
+                  ? const Center(
                 child: Text('No results found.'),
               )
                   : DeliverySearchResultTable(
@@ -349,20 +374,13 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
       ),
     );
   }
-
-  String _formatTimeOfDay(TimeOfDay time) {
-    final hours = time.hour.toString().padLeft(2, '0');
-    final minutes = time.minute.toString().padLeft(2, '0');
-    return '$hours:$minutes';
-  }
 }
-
 
 class DeliverySearchResultTable extends StatelessWidget {
   final List<dynamic> searchResults; // 仮の検索結果データ
 
   // コンストラクタ
-  DeliverySearchResultTable({required this.searchResults});
+  const DeliverySearchResultTable({super.key, required this.searchResults});
 
   // 表示したいデータに応じて適切な Widget を構築
   @override
@@ -415,13 +433,16 @@ class DeliverySearchResultTable extends StatelessWidget {
               searchResults.length,
                   (index) {
                 Map<String, dynamic> deliveryData = searchResults[index].data() as Map<String, dynamic>;
-                Timestamp timestamp = deliveryData['date'] as Timestamp;
 
-// Timestamp型をDateTime型に変換
-                    DateTime dateTime = deliveryData['date'].toDate();
+                // Timestamp型をDateTime型に変換
+                DateTime dateTime = deliveryData['date'].toDate();
 
-// DateTime型を'yyyyMMdd'形式の文字列にフォーマット
-                    String formattedDate = DateFormat('yyyyMMdd').format(dateTime);
+                // DateTime型を'yyyyMMdd'形式の文字列にフォーマット
+                String formattedDate = DateFormat('yyyyMMdd').format(dateTime);
+
+                // DateTime型を'hh:mm'形式の文字列にフォーマット
+                String formattedTime = DateFormat('hh:mm').format(dateTime);
+
                 return DataRow(
                   cells: [
                     DataCell(
@@ -433,7 +454,7 @@ class DeliverySearchResultTable extends StatelessWidget {
                     DataCell(
                       SizedBox(
                         width: 100, // 列の幅を設定
-                        child: Text(deliveryData['time'].toString()),
+                        child: Text(formattedTime),
                       ),
                     ),
                     DataCell(
