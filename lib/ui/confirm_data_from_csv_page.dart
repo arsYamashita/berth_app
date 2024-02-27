@@ -67,7 +67,9 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                         children: [
                           _ConfirmButton(
                             title: "キャンセル",
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
                           ),
                           _ConfirmButton(
                             title: "登録する",
@@ -226,7 +228,10 @@ class _RegistrationDialog extends ConsumerWidget {
             ? SizedBox()
             : ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  // ダイアログを閉じて前の画面に戻る
+                  Navigator.pop(context);
+                  // ダイアログが閉じられた後に前の画面に戻る
+                  Navigator.pop(context);
                 },
                 child: const Text("OK"),
               ),

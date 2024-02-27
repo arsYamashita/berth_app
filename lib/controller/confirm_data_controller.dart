@@ -33,16 +33,6 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
     state = csvResult;
   }
 
-  void testShowDialog() async {
-    ref.read(dialogStateProvider.notifier).state = await AsyncValue.loading();
-    Future.delayed(const Duration(seconds: 2), () async {
-      ref.read(dialogStateProvider.notifier).state =
-          await AsyncValue.guard(() async {
-        // ここで実際にログイン処理を非同期で行う
-      });
-    });
-  }
-
   //データをFirebaseに登録
   void registerData() {
     state.then((data) async {
@@ -128,6 +118,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
       'Content-Type': 'application/json',
     };
 
+
     //業者ごとにまとめて通知する。
     for (var notification in notifications) {
       // 送信するメッセージデータ
@@ -159,6 +150,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
           print('レスポンスボディ: ${response.body}');
         }
       }
+
     }
   }
 }
