@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:berth_app/model/ReservationNotification.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -53,10 +54,26 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
       //ローディングさせる
       ref.read(dialogStateProvider.notifier).state =
           await const AsyncValue.loading();
+      List<ReservationNotification> notifications = [];
       //for文でデータを登録
       for (int i = 0; i < data.csvData.length; i++) {
         final uuid = Uuid().v4();
         try {
+          //予約通知用のデータを作成
+          notifications
+                  .where(
+                      (element) => element.userCode == data.csvData[i].userCode)
+                  .isEmpty
+              ? notifications.add(
+                  ReservationNotification(userCode: data.csvData[i].userCode))
+              : null;
+          //予約IDを格納
+          notifications
+              .firstWhere(
+                  (element) => element.userCode == data.csvData[i].userCode)
+              .addReservationID(uuid);
+
+          //予約データを登録
           await mFirestore.collection('reservation').doc(uuid).set({
             'branchCode': data.csvData[i].branchCode,
             'branchName': data.csvData[i].branchName,
@@ -72,61 +89,76 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
           return;
         }
       }
+
       //全データ登録したことを通知
       ref.read(dialogStateProvider.notifier).state =
           await const AsyncValue.data(null);
+      //各ユーザーのfcmトークンをセット
+      await fetchFcmToken(notifications);
+      //通知を送信
+      await sendFCMNotification(notifications);
     });
   }
 
-  Future<void> sendFCMNotification() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    String? token = await user?.getIdToken();
-
-    if (token == null) {
-      return;
+  //登録したユーザーコードから端末のfcmトークンを取得する
+  Future<void> fetchFcmToken(
+      List<ReservationNotification> notifications) async {
+    final mFirestore = FirebaseFirestore.instance;
+    for (var element in notifications) {
+      final userCode = element.userCode;
+      final userSnapshot =
+          await mFirestore.collection('users').doc(userCode).get();
+      //ユーザーコードに紐づくfcmトークンを取得（配列型）
+      final fcmToken = (userSnapshot['fcmToken'] as List<dynamic>)
+          .map((token) => token.toString())
+          .toList();
+      element.addFcmToken(fcmToken);
     }
-    print('token: $token');
+  }
 
+  Future<void> sendFCMNotification(
+      List<ReservationNotification> notifications) async {
     // FCMサーバーへのエンドポイントURL
-    final url = Uri.parse(
-        'https://fcm.googleapis.com/v1/projects/berthapp-c3c59/messages:send');
+    final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
 
     // HTTPリクエストヘッダー
     final headers = {
-      'Authorization': 'Bearer $token',
+      'Authorization':
+          'key=AAAAQQt6HGM:APA91bHVEwYFOZTf4bLxa3wLMptpGL9G5TcPH3l-8CvRRKDPRWvrqhsxBhyWIoOdg0fmjSMGdO_rB7cFB8PZfqwkm_FQdfPDrKcuwioSW6VCiduZlB3HDY6V9FyAoHCqlntlqxDaidTv',
       'Content-Type': 'application/json',
     };
 
+    //業者ごとにまとめて通知する。
+    for (var notification in notifications) {
+      // 送信するメッセージデータ
+      for (var fcmToken in notification.fcmTokens) {
+        final messageData = {
+          'notification': {
+            'title': '入荷コントロール',
+            'body': '新しい入荷予約が確定しました。',
+          },
+          'data': {
+            'reservations': notification.reservationIDs,
+            'key2': 'value2',
+          },
+          //実機端末のfcmトークン
+          'to': fcmToken,
+        };
+        // HTTP POSTリクエストの送信
+        final response = await http.post(url,
+            headers: headers,
+            body: jsonEncode(messageData),
+            encoding: Encoding.getByName('utf-8'));
 
-    // 送信するメッセージデータ
-    final messageData = {
-      'message': {
-        'token':
-            'ch-4IyvLhEipv4KnTXqG43:APA91bGR7w9kg7TcmBq4pVXMHvxUznLRgATrh0Eqg2OET8ZWCUKzGOUqoxaoWx55G_vM27kOPjazpotE6PoVf8NGJGQx_i5lON4l3RGAFrWryK0zqQCFhEcGqlX-4ZkEMd07paHR6hNb',
-        'notification': {
-          'title': '入荷コントロール',
-          'body': '新しい入荷予約が確定しました。',
-        },
-        'data': {
-          'key1': 'value1',
-          'key2': 'value2',
-        },
-      },
-    };
-
-    // HTTP POSTリクエストの送信
-    final response = await http.post(
-      url,
-      headers: headers,
-      body: jsonEncode(messageData),
-    );
-
-    // レスポンスの確認
-    if (response.statusCode == 200) {
-      print('FCM通知が正常に送信されました');
-    } else {
-      print('FCM通知の送信に失敗しました: ${response.statusCode}');
-      print('レスポンスボディ: ${response.body}');
+        // レスポンスの確認
+        if (response.statusCode == 200) {
+          print('FCM通知が正常に送信されました');
+          print('レスポンスボディ: ${response.body}');
+        } else {
+          print('FCM通知の送信に失敗しました: ${response.statusCode}');
+          print('レスポンスボディ: ${response.body}');
+        }
+      }
     }
   }
 }
