@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_web_pagination/flutter_web_pagination.dart';
 
 class DeliverySearchService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -101,6 +102,8 @@ class SearchArrivalPage extends StatefulWidget {
 }
 
 class _SearchArrivalPageState extends State<SearchArrivalPage> {
+  GlobalKey<_DeliverySearchResultTableState> _searchResultTableKey =
+  GlobalKey();
   final DeliverySearchService deliverySearchService = DeliverySearchService();
   DateTime? _deliveryStartDate;
   DateTime? _deliveryEndDate;
@@ -110,6 +113,58 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   String? _userCode;
   String? _deliveryPort;
   List<DocumentSnapshot> _searchResults = [];
+  late List<DocumentSnapshot> _currentResults;
+  late int _currentPage;
+  late int _totalPages;
+  static const int _itemsPerPage = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPage = 1;
+  }
+  void _newUpdateResults() {
+    int newTotalPages = (_searchResults.length / _itemsPerPage).ceil();
+
+    if (_currentPage > newTotalPages) {
+      _currentPage = 1;
+    }
+
+    // 新しいキーを作成
+    final newKey = GlobalKey<_DeliverySearchResultTableState>();
+
+    setState(() {
+      _searchResultTableKey.currentState?.dispose(); // 古いキーの状態を解放
+      _searchResultTableKey = newKey; // 新しいキーに更新
+      _currentPage = _currentPage;
+      _totalPages = newTotalPages;
+      _currentResults = _searchResults
+          .skip((_currentPage - 1) * _itemsPerPage)
+          .take(_itemsPerPage)
+          .toList()
+          .cast<DocumentSnapshot>();
+    });
+  }
+  void _updateResults() {
+    int newTotalPages = (_searchResults.length / _itemsPerPage).ceil();
+
+    if (_currentPage > newTotalPages) {
+      // もし現在のページが新しいページ数を超えていたら、1ページ目に戻す
+      _currentPage = 1;
+    }
+
+    List<DocumentSnapshot> newCurrentResults = _searchResults
+        .skip((_currentPage - 1) * _itemsPerPage)
+        .take(_itemsPerPage)
+        .toList()
+        .cast<DocumentSnapshot>();
+    setState(() {
+      _currentPage = _currentPage; // currentPage を受け取り、更新する
+      _totalPages = newTotalPages;
+      _currentResults = newCurrentResults;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -329,8 +384,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                 ElevatedButton(
                   onPressed: () async {
                     if (_deliveryStartDate != null && _deliveryEndDate != null) {
-                      List<
-                          DocumentSnapshot> results = await deliverySearchService
+                      List<DocumentSnapshot> results = await deliverySearchService
                           .searchDeliveries(
                         deliveryStartDate: _deliveryStartDate.toString(),
                         deliveryEndDate: _deliveryEndDate.toString(),
@@ -340,8 +394,11 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         userCode: _userCode,
                         deliveryPort: _deliveryPort,
                       );
+                      // _searchResultsと_totalPagesを更新
                       setState(() {
                         _searchResults = results;
+                        _currentPage = 1; // ページ数を1にリセット
+                        _newUpdateResults(); // ここで_updateResultsを呼び出す
                       });
                     } else {
                       ScaffoldMessenger.of(context)
@@ -366,7 +423,9 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                 child: Text('No results found.'),
               )
                   : DeliverySearchResultTable(
+                key: _searchResultTableKey,
                 searchResults: _searchResults as List<dynamic>,
+                onUpdateResults: _updateResults, // 新しいコールバックを追加
               ),
             ),
           ],
@@ -376,118 +435,167 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   }
 }
 
-class DeliverySearchResultTable extends StatelessWidget {
+class DeliverySearchResultTable extends StatefulWidget {
   final List<dynamic> searchResults; // 仮の検索結果データ
+  final VoidCallback onUpdateResults; // 追加
 
   // コンストラクタ
-  const DeliverySearchResultTable({super.key, required this.searchResults});
+  const DeliverySearchResultTable({
+    super.key,
+    required this.searchResults,
+    required this.onUpdateResults, // 追加
+  });
 
-  // 表示したいデータに応じて適切な Widget を構築
+  @override
+  _DeliverySearchResultTableState createState() =>
+      _DeliverySearchResultTableState();
+}
+
+class _DeliverySearchResultTableState extends State<DeliverySearchResultTable> {
+  late List<DocumentSnapshot> _currentResults;
+  late int _currentPage;
+  late int _totalPages;
+  static const int _itemsPerPage = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPage = 1;
+    // 総ページ数を計算し、少なくとも1になるようにする
+    _totalPages = (widget.searchResults.length / _itemsPerPage).ceil();
+    _totalPages = _totalPages < 1 ? 1 : _totalPages;
+    // サブリストが範囲外にならないようにする
+    int endIndex = _currentPage * _itemsPerPage;
+    endIndex = endIndex > widget.searchResults.length ? widget.searchResults.length : endIndex;
+    _currentResults = widget.searchResults.sublist(0, endIndex).cast<DocumentSnapshot>();
+  }
+
+  void onPageChanged(int page) {
+    setState(() {
+      _currentPage = page;
+      _currentResults = widget.searchResults
+          .skip((_currentPage - 1) * _itemsPerPage)
+          .take(_itemsPerPage)
+          .toList()
+          .cast<DocumentSnapshot>();
+    });
+
+    // 新しいコールバックを呼び出す
+    widget.onUpdateResults(); // currentPage を渡すように変更
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      scrollDirection: Axis.vertical,
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columns: const [
-              DataColumn(
-                label: SizedBox(
-                  width: 100, // 列の幅を設定
-                  child: Text('日付'),
+    return Expanded(
+      child: ListView(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columns: const [
+                DataColumn(
+                  label: SizedBox(
+                    width: 120,
+                    child: Text('日付'),
+                  ),
                 ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: 100, // 列の幅を設定
-                  child: Text('時間'),
+                DataColumn(
+                  label: SizedBox(
+                    width: 120,
+                    child: Text('時間'),
+                  ),
                 ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: 100, // 列の幅を設定
-                  child: Text('センター'),
+                DataColumn(
+                  label: SizedBox(
+                    width: 120,
+                    child: Text('センター'),
+                  ),
                 ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: 100, // 列の幅を設定
-                  child: Text('取引先CD'),
+                DataColumn(
+                  label: SizedBox(
+                    width: 120,
+                    child: Text('取引先CD'),
+                  ),
                 ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: 100, // 列の幅を設定
-                  child: Text('取引先名'),
+                DataColumn(
+                  label: SizedBox(
+                    width: 120,
+                    child: Text('取引先名'),
+                  ),
                 ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: 100, // 列の幅を設定
-                  child: Text('納品口'),
+                DataColumn(
+                  label: SizedBox(
+                    width: 120,
+                    child: Text('納品口'),
+                  ),
                 ),
-              ),
-            ],
-            rows: List<DataRow>.generate(
-              searchResults.length,
-                  (index) {
-                Map<String, dynamic> deliveryData = searchResults[index].data() as Map<String, dynamic>;
+              ],
+              rows: List<DataRow>.generate(
+                _currentResults.length,
+                    (index) {
+                  if (index < _currentResults.length) {
+                  Map<String, dynamic> deliveryData =
+                  _currentResults[index].data() as Map<String, dynamic>;
 
-                // Timestamp型をDateTime型に変換
-                DateTime dateTime = deliveryData['date'].toDate();
+                  DateTime dateTime = deliveryData['date'].toDate();
+                  String formattedDate =
+                  DateFormat('yyyyMMdd').format(dateTime);
+                  String formattedTime = DateFormat('hh:mm').format(dateTime);
 
-                // DateTime型を'yyyyMMdd'形式の文字列にフォーマット
-                String formattedDate = DateFormat('yyyyMMdd').format(dateTime);
-
-                // DateTime型を'hh:mm'形式の文字列にフォーマット
-                String formattedTime = DateFormat('hh:mm').format(dateTime);
-
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      SizedBox(
-                        width: 100, // 列の幅を設定
-                        child: Text(formattedDate),
+                  return DataRow(
+                    cells: [
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child: Text(formattedDate),
+                        ),
                       ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 100, // 列の幅を設定
-                        child: Text(formattedTime),
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child: Text(formattedTime),
+                        ),
                       ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 100, // 列の幅を設定
-                        child: Text(deliveryData['branchCode'].toString()),
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child: Text(deliveryData['branchCode'].toString()),
+                        ),
                       ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 100, // 列の幅を設定
-                        child: Text(deliveryData['userCode'].toString()),
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child: Text(deliveryData['userCode'].toString()),
+                        ),
                       ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 100, // 列の幅を設定
-                        child: Text(deliveryData['userName'].toString()),
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child: Text(deliveryData['userName'].toString()),
+                        ),
                       ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 100, // 列の幅を設定
-                        child: Text(deliveryData['deliveryPort'].toString()),
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child:
+                          Text(deliveryData['deliveryPort'].toString()),
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );} else {
+                    return const DataRow(cells: []); // インデックスが範囲外の場合は空のDataRowを返す
+                  }
+                },
+              ),
             ),
           ),
-        ),
-      ],
+          WebPagination(
+            currentPage: _currentPage,
+            totalPage: _totalPages,
+            onPageChanged: onPageChanged,
+          ),
+        ],
+      ),
     );
   }
 }
