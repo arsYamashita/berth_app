@@ -6,8 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../util/csv_reader.dart';
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:http/http.dart' as http;
+import 'package:berth_app/firebase_options.dart';
 
 //ダイアログ用プロバイダー
 final dialogStateProvider = StateProvider<AsyncValue<void>>(
@@ -92,9 +91,9 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
       await const AsyncValue.data(null);
       //各ユーザーのfcmトークンをセット
       await fetchFcmToken(notifications);
-      print('notifications:$notifications');
+
       //通知を送信
-      await sendFCMNotification(notifications);
+      await sendFCMNotificationV1(notifications);
     });
   }
 
@@ -162,28 +161,22 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
   }
 
   Future<String> getAccessToken() async {
-    final jsonPath = 'json/service-account-key.json';
 
-    // HTTPリクエストでファイルを取得
-    final response = await http.get(Uri.parse(jsonPath));
-
-    print('response:$response');
-    if (response.statusCode == 200) {
-      final credentials = ServiceAccountCredentials.fromJson(json.decode(response.body));
-
+    final userSnapshot =
+    await FirebaseFirestore.instance.collection('authKey').doc('service-account-key').get();
+      final credentials = ServiceAccountCredentials.fromJson(json.decode(userSnapshot['service-account-key']));
       // 有効期限の短い OAuth 2.0 アクセス トークンを取得
       final client = await clientViaServiceAccount(credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
       final accessToken = await client.credentials.accessToken;
 
       return accessToken.data;
-    } else {
-      throw Exception('Failed to load service account key');
-    }
   }
 
   Future<void> sendFCMNotificationV1(List<ReservationNotification> notifications) async {
     final accessToken = await getAccessToken();
-    final url = Uri.parse('https://fcm.googleapis.com/v1/projects/berthapp-c3c59/messages:send');
+    final project_id = DefaultFirebaseOptions.web.projectId;
+
+    final url = Uri.parse('https://fcm.googleapis.com/v1/projects/$project_id/messages:send');
     final headers = {
       'Authorization': 'Bearer $accessToken',
       'Content-Type': 'application/json',
