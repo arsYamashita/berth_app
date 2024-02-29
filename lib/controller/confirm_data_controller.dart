@@ -94,7 +94,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
       await fetchFcmToken(notifications);
       print('notifications:$notifications');
       //通知を送信
-      await sendFCMNotificationV1(notifications);
+      await sendFCMNotification(notifications);
     });
   }
 
