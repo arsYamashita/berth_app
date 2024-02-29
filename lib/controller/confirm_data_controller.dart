@@ -5,7 +5,9 @@ import 'package:uuid/uuid.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../util/csv_reader.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
 
 //ダイアログ用プロバイダー
 final dialogStateProvider = StateProvider<AsyncValue<void>>(
@@ -51,11 +53,11 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
         try {
           //予約通知用のデータを作成
           notifications
-                  .where(
-                      (element) => element.userCode == data.csvData[i].userCode)
-                  .isEmpty
+              .where(
+                  (element) => element.userCode == data.csvData[i].userCode)
+              .isEmpty
               ? notifications.add(
-                  ReservationNotification(userCode: data.csvData[i].userCode))
+              ReservationNotification(userCode: data.csvData[i].userCode))
               : null;
           //予約IDを格納
           notifications
@@ -72,21 +74,27 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
             'deliveryPort': data.csvData[i].deliveryPort,
             'userName': data.csvData[i].userName,
           }).onError(
-              (error, stackTrace) => throw Exception([error, stackTrace]));
+                  (error, stackTrace) => throw Exception([error, stackTrace]));
         } catch (e, s) {
-          ref.read(dialogStateProvider.notifier).state =
-              await AsyncValue.error(e, s);
+          ref
+              .read(dialogStateProvider.notifier)
+              .state =
+          await AsyncValue.error(e, s);
           return;
         }
       }
 
       //全データ登録したことを通知
-      ref.read(dialogStateProvider.notifier).state =
-          await const AsyncValue.data(null);
+      print('全データ登録したことを通知');
+      ref
+          .read(dialogStateProvider.notifier)
+          .state =
+      await const AsyncValue.data(null);
       //各ユーザーのfcmトークンをセット
       await fetchFcmToken(notifications);
+      print('notifications:$notifications');
       //通知を送信
-      await sendFCMNotification(notifications);
+      await sendFCMNotificationV1(notifications);
     });
   }
 
@@ -97,7 +105,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
     for (var element in notifications) {
       final userCode = element.userCode;
       final userSnapshot =
-          await mFirestore.collection('users').doc(userCode).get();
+      await mFirestore.collection('users').doc(userCode).get();
       //ユーザーコードに紐づくfcmトークンを取得（配列型）
       final fcmToken = (userSnapshot['fcmToken'] as List<dynamic>)
           .map((token) => token.toString())
@@ -114,7 +122,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
     // HTTPリクエストヘッダー
     final headers = {
       'Authorization':
-          'key=AAAAQQt6HGM:APA91bHVEwYFOZTf4bLxa3wLMptpGL9G5TcPH3l-8CvRRKDPRWvrqhsxBhyWIoOdg0fmjSMGdO_rB7cFB8PZfqwkm_FQdfPDrKcuwioSW6VCiduZlB3HDY6V9FyAoHCqlntlqxDaidTv',
+      'key=AAAAQQt6HGM:APA91bHVEwYFOZTf4bLxa3wLMptpGL9G5TcPH3l-8CvRRKDPRWvrqhsxBhyWIoOdg0fmjSMGdO_rB7cFB8PZfqwkm_FQdfPDrKcuwioSW6VCiduZlB3HDY6V9FyAoHCqlntlqxDaidTv',
       'Content-Type': 'application/json',
     };
 
@@ -150,7 +158,70 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
           print('レスポンスボディ: ${response.body}');
         }
       }
+    }
+  }
 
+  Future<String> getAccessToken() async {
+    final jsonPath = 'json/service-account-key.json';
+
+    // HTTPリクエストでファイルを取得
+    final response = await http.get(Uri.parse(jsonPath));
+
+    print('response:$response');
+    if (response.statusCode == 200) {
+      final credentials = ServiceAccountCredentials.fromJson(json.decode(response.body));
+
+      // 有効期限の短い OAuth 2.0 アクセス トークンを取得
+      final client = await clientViaServiceAccount(credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
+      final accessToken = await client.credentials.accessToken;
+
+      return accessToken.data;
+    } else {
+      throw Exception('Failed to load service account key');
+    }
+  }
+
+  Future<void> sendFCMNotificationV1(List<ReservationNotification> notifications) async {
+    final accessToken = await getAccessToken();
+    final url = Uri.parse('https://fcm.googleapis.com/v1/projects/berthapp-c3c59/messages:send');
+    final headers = {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    };
+
+    // 業者ごとにまとめて通知する。
+    for (var notification in notifications) {
+      // 送信するメッセージデータ
+      for (var fcmToken in notification.fcmTokens) {
+        final messageData = {
+          'message': {
+            'token': fcmToken,
+            'notification': {
+              'title': '入荷コントロール',
+              'body': '新しい入荷予約が確定しました。',
+            },
+            'data': {
+              'key1': 'value1', // ここに必要なデータを追加
+              'key2': 'value2',
+            },
+          },
+        };
+        // HTTP POSTリクエストの送信
+        final response = await http.post(
+          url,
+          headers: headers,
+          body: jsonEncode(messageData),
+        );
+
+        // レスポンスの確認
+        if (response.statusCode == 200) {
+          print('FCM通知が正常に送信されました');
+          print('レスポンスボディ: ${response.body}');
+        } else {
+          print('FCM通知の送信に失敗しました: ${response.statusCode}');
+          print('レスポンスボディ: ${response.body}');
+        }
+      }
     }
   }
 }
