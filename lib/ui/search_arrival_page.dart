@@ -116,7 +116,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   late List<DocumentSnapshot> _currentResults;
   late int _currentPage;
   late int _totalPages;
-  static const int _itemsPerPage = 10;
+  static const int _itemsPerPage = 100;
 
   @override
   void initState() {
@@ -455,7 +455,7 @@ class _DeliverySearchResultTableState extends State<DeliverySearchResultTable> {
   late List<DocumentSnapshot> _currentResults;
   late int _currentPage;
   late int _totalPages;
-  static const int _itemsPerPage = 10;
+  static const int _itemsPerPage = 100;
 
   @override
   void initState() {
