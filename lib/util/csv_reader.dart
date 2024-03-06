@@ -227,6 +227,11 @@ class CsvReader {
       return false;
     }
 
+    //日付が今日より過去の日付であることを確認
+    if (DateTime(year, month, day).isBefore(DateTime.now())) {
+      return false;
+    }
+
     return true;
   }
 
