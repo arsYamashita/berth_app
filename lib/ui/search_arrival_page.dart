@@ -540,7 +540,7 @@ class _DeliverySearchResultTableState extends State<DeliverySearchResultTable> {
                   DateTime dateTime = deliveryData['date'].toDate();
                   String formattedDate =
                   DateFormat('yyyyMMdd').format(dateTime);
-                  String formattedTime = DateFormat('hh:mm').format(dateTime);
+                  String formattedTime = DateFormat('HH:mm').format(dateTime);
 
                   return DataRow(
                     cells: [
