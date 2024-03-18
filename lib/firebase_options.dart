@@ -52,15 +52,15 @@ class DefaultFirebaseOptions {
     }
   }
   // ars
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyALtX2cGYh364HZtHv8lCoxMrEICyOtFlA',
-    appId: '1:279365426275:web:c6f6c3d7513c2d519cec56',
-    messagingSenderId: '279365426275',
-    projectId: 'berthapp-c3c59',
-    authDomain: 'berthapp-c3c59.firebaseapp.com',
-    storageBucket: 'berthapp-c3c59.appspot.com',
-    measurementId: 'G-FWKBLVLC0Y',
-  );
+  // static const FirebaseOptions web = FirebaseOptions(
+  //   apiKey: 'AIzaSyALtX2cGYh364HZtHv8lCoxMrEICyOtFlA',
+  //   appId: '1:279365426275:web:c6f6c3d7513c2d519cec56',
+  //   messagingSenderId: '279365426275',
+  //   projectId: 'berthapp-c3c59',
+  //   authDomain: 'berthapp-c3c59.firebaseapp.com',
+  //   storageBucket: 'berthapp-c3c59.appspot.com',
+  //   measurementId: 'G-FWKBLVLC0Y',
+  // );
   // bita
   // static const FirebaseOptions web = FirebaseOptions(
   //     apiKey: "AIzaSyAJrJTsl2uOG_4zZqqWaEkBOj9wSGuqSJY",
@@ -70,4 +70,13 @@ class DefaultFirebaseOptions {
   //     messagingSenderId: "630263066288",
   //     appId: "1:630263066288:web:39a54b3f82764355361575"
   // );
+  // honban
+  static const FirebaseOptions web = FirebaseOptions(
+      apiKey: "AIzaSyCIaNv8FRpZfasblIDUt-dCcIUKftWi55s",
+      authDomain: "nohinctrl-48ee8.firebaseapp.com",
+      projectId: "nohinctrl-48ee8",
+      storageBucket: "nohinctrl-48ee8.appspot.com",
+      messagingSenderId: "555460993061",
+      appId: "1:555460993061:web:4d4a4ccbf366ce8964dfcc"
+  );
 }
