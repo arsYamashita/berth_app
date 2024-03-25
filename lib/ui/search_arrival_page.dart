@@ -20,12 +20,14 @@ class DeliverySearchService {
     // deliveryStartDateとdeliveryEndDateの間の日付のデータを取得
     if (deliveryStartDate.isNotEmpty && deliveryEndDate.isNotEmpty) {
       DateTime startDate = DateTime.parse(deliveryStartDate);
-      DateTime endDate = DateTime.parse(deliveryEndDate).add(const Duration(days: 1));
+      DateTime endDate =
+          DateTime.parse(deliveryEndDate).add(const Duration(days: 1));
 
       Timestamp formattedStartDate = Timestamp.fromDate(startDate);
       Timestamp formattedEndDate = Timestamp.fromDate(endDate);
 
-      dateQuery = dateQuery.where('date', isGreaterThanOrEqualTo: formattedStartDate);
+      dateQuery =
+          dateQuery.where('date', isGreaterThanOrEqualTo: formattedStartDate);
       dateQuery = dateQuery.where('date', isLessThan: formattedEndDate);
     }
 
@@ -34,37 +36,50 @@ class DeliverySearchService {
 
     List<DocumentSnapshot> resultSet = dateQuerySnapshot.docs;
 
-    if (deliveryStartTime != null && deliveryEndTime != null && deliveryStartTime.isNotEmpty && deliveryEndTime.isNotEmpty) {
+    if (deliveryStartTime != null &&
+        deliveryEndTime != null &&
+        deliveryStartTime.isNotEmpty &&
+        deliveryEndTime.isNotEmpty) {
       resultSet = resultSet.where((doc) {
         Timestamp docDateTime = doc['date'];
-        DateTime startTime = DateTime.parse("2000-01-01 ${deliveryStartTime.padLeft(5, '0')}");
-        DateTime endTime = DateTime.parse("2000-01-01 ${deliveryEndTime.padLeft(5, '0')}");
+        DateTime startTime =
+            DateTime.parse("2000-01-01 ${deliveryStartTime.padLeft(5, '0')}");
+        DateTime endTime =
+            DateTime.parse("2000-01-01 ${deliveryEndTime.padLeft(5, '0')}");
         DateTime docTime = docDateTime.toDate();
         // 年月日は無視して、時分だけを比較
-        DateTime docTimeOnlyHourMinute = DateTime(2000, 1, 1, docTime.hour, docTime.minute);
-        return startTime.isBefore(docTimeOnlyHourMinute) || startTime.isAtSameMomentAs(docTimeOnlyHourMinute) &&
-            endTime.isAfter(docTimeOnlyHourMinute) || endTime.isAtSameMomentAs(docTimeOnlyHourMinute);
+        DateTime docTimeOnlyHourMinute =
+            DateTime(2000, 1, 1, docTime.hour, docTime.minute);
+        return (startTime.isBefore(docTimeOnlyHourMinute) ||
+                startTime.isAtSameMomentAs(docTimeOnlyHourMinute)) &&
+            (endTime.isAfter(docTimeOnlyHourMinute) ||
+                endTime.isAtSameMomentAs(docTimeOnlyHourMinute));
       }).toList();
     } else if (deliveryStartTime != null && deliveryStartTime.isNotEmpty) {
       resultSet = resultSet.where((doc) {
         Timestamp docDateTime = doc['date'];
-        DateTime startTime = DateTime.parse("2000-01-01 ${deliveryStartTime.padLeft(5, '0')}");
+        DateTime startTime =
+            DateTime.parse("2000-01-01 ${deliveryStartTime.padLeft(5, '0')}");
         DateTime docTime = docDateTime.toDate();
         // 年月日は無視して、時分だけを比較
-        DateTime docTimeOnlyHourMinute = DateTime(2000, 1, 1, docTime.hour, docTime.minute);
-        return startTime.isBefore(docTimeOnlyHourMinute) || startTime.isAtSameMomentAs(docTimeOnlyHourMinute);
+        DateTime docTimeOnlyHourMinute =
+            DateTime(2000, 1, 1, docTime.hour, docTime.minute);
+        return startTime.isBefore(docTimeOnlyHourMinute) ||
+            startTime.isAtSameMomentAs(docTimeOnlyHourMinute);
       }).toList();
     } else if (deliveryEndTime != null && deliveryEndTime.isNotEmpty) {
       resultSet = resultSet.where((doc) {
         Timestamp docDateTime = doc['date'];
-        DateTime endTime = DateTime.parse("2000-01-01 ${deliveryEndTime.padLeft(5, '0')}");
+        DateTime endTime =
+            DateTime.parse("2000-01-01 ${deliveryEndTime.padLeft(5, '0')}");
         DateTime docTime = docDateTime.toDate();
         // 年月日は無視して、時分だけを比較
-        DateTime docTimeOnlyHourMinute = DateTime(2000, 1, 1, docTime.hour, docTime.minute);
-        return endTime.isAfter(docTimeOnlyHourMinute) || endTime.isAtSameMomentAs(docTimeOnlyHourMinute);
+        DateTime docTimeOnlyHourMinute =
+            DateTime(2000, 1, 1, docTime.hour, docTime.minute);
+        return endTime.isAfter(docTimeOnlyHourMinute) ||
+            endTime.isAtSameMomentAs(docTimeOnlyHourMinute);
       }).toList();
     }
-
 
     // 他の条件にも同様に対応
     if (branchCode != null && branchCode.isNotEmpty) {
@@ -93,6 +108,7 @@ class DeliverySearchService {
     return resultSet;
   }
 }
+
 class SearchArrivalPage extends StatefulWidget {
   // コンストラクタに key パラメータを追加
   const SearchArrivalPage({super.key});
@@ -103,7 +119,7 @@ class SearchArrivalPage extends StatefulWidget {
 
 class _SearchArrivalPageState extends State<SearchArrivalPage> {
   GlobalKey<_DeliverySearchResultTableState> _searchResultTableKey =
-  GlobalKey();
+      GlobalKey();
   final DeliverySearchService deliverySearchService = DeliverySearchService();
   DateTime? _deliveryStartDate;
   DateTime? _deliveryEndDate;
@@ -123,6 +139,13 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
     super.initState();
     _currentPage = 1;
   }
+
+  @override
+  void dispose() {
+    _searchResultTableKey.currentState?.dispose();
+    super.dispose();
+  }
+
   void _newUpdateResults() {
     int newTotalPages = (_searchResults.length / _itemsPerPage).ceil();
 
@@ -134,7 +157,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
     final newKey = GlobalKey<_DeliverySearchResultTableState>();
 
     setState(() {
-      _searchResultTableKey.currentState?.dispose(); // 古いキーの状態を解放
+      // _searchResultTableKey.currentState?.dispose(); // 古いキーの状態を解放
       _searchResultTableKey = newKey; // 新しいキーに更新
       _currentPage = _currentPage;
       _totalPages = newTotalPages;
@@ -145,6 +168,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
           .cast<DocumentSnapshot>();
     });
   }
+
   void _updateResults() {
     int newTotalPages = (_searchResults.length / _itemsPerPage).ceil();
 
@@ -164,7 +188,6 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
       _currentResults = newCurrentResults;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -206,12 +229,14 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                             borderRadius: BorderRadius.circular(5),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0,
+                            horizontal: 10,
+                            vertical: 0,
                           ),
                         ),
                         controller: TextEditingController(
                           text: _deliveryStartDate != null
-                              ? DateFormat('yyyyMMdd').format(_deliveryStartDate!)
+                              ? DateFormat('yyyyMMdd')
+                                  .format(_deliveryStartDate!)
                               : '',
                         ),
                       ),
@@ -242,7 +267,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                             borderRadius: BorderRadius.circular(5),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0,
+                            horizontal: 10,
+                            vertical: 0,
                           ),
                         ),
                         controller: TextEditingController(
@@ -267,7 +293,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         borderRadius: BorderRadius.circular(5),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 0,
+                        horizontal: 10,
+                        vertical: 0,
                       ),
                     ),
                     onChanged: (value) {
@@ -294,7 +321,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         borderRadius: BorderRadius.circular(5),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 0,
+                        horizontal: 10,
+                        vertical: 0,
                       ),
                     ),
                     onChanged: (value) {
@@ -313,7 +341,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         borderRadius: BorderRadius.circular(5),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 0,
+                        horizontal: 10,
+                        vertical: 0,
                       ),
                     ),
                     onChanged: (value) {
@@ -336,7 +365,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         borderRadius: BorderRadius.circular(5),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 0,
+                        horizontal: 10,
+                        vertical: 0,
                       ),
                     ),
                     onChanged: (value) {
@@ -383,9 +413,10 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    if (_deliveryStartDate != null && _deliveryEndDate != null) {
-                      List<DocumentSnapshot> results = await deliverySearchService
-                          .searchDeliveries(
+                    if (_deliveryStartDate != null &&
+                        _deliveryEndDate != null) {
+                      List<DocumentSnapshot> results =
+                          await deliverySearchService.searchDeliveries(
                         deliveryStartDate: _deliveryStartDate.toString(),
                         deliveryEndDate: _deliveryEndDate.toString(),
                         branchCode: _branchCode,
@@ -401,8 +432,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                         _newUpdateResults(); // ここで_updateResultsを呼び出す
                       });
                     } else {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text("開始日と終了日は必須項目です")));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("開始日と終了日は必須項目です")));
                     }
                   },
                   child: const Text('検索'),
@@ -417,17 +448,15 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
               endIndent: 0,
               color: Colors.grey,
             ),
-            Expanded(
-              child: _searchResults.isEmpty
-                  ? const Center(
-                child: Text('No results found.'),
-              )
-                  : DeliverySearchResultTable(
-                key: _searchResultTableKey,
-                searchResults: _searchResults as List<dynamic>,
-                onUpdateResults: _updateResults, // 新しいコールバックを追加
-              ),
-            ),
+            _searchResults.isEmpty
+                ? const Center(
+                    child: Text('No results found.'),
+                  )
+                : DeliverySearchResultTable(
+                    key: _searchResultTableKey,
+                    searchResults: _searchResults as List<dynamic>,
+                    onUpdateResults: _updateResults, // 新しいコールバックを追加
+                  ),
           ],
         ),
       ),
@@ -458,6 +487,11 @@ class _DeliverySearchResultTableState extends State<DeliverySearchResultTable> {
   static const int _itemsPerPage = 100;
 
   @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _currentPage = 1;
@@ -466,8 +500,11 @@ class _DeliverySearchResultTableState extends State<DeliverySearchResultTable> {
     _totalPages = _totalPages < 1 ? 1 : _totalPages;
     // サブリストが範囲外にならないようにする
     int endIndex = _currentPage * _itemsPerPage;
-    endIndex = endIndex > widget.searchResults.length ? widget.searchResults.length : endIndex;
-    _currentResults = widget.searchResults.sublist(0, endIndex).cast<DocumentSnapshot>();
+    endIndex = endIndex > widget.searchResults.length
+        ? widget.searchResults.length
+        : endIndex;
+    _currentResults =
+        widget.searchResults.sublist(0, endIndex).cast<DocumentSnapshot>();
   }
 
   void onPageChanged(int page) {
@@ -532,58 +569,60 @@ class _DeliverySearchResultTableState extends State<DeliverySearchResultTable> {
               ],
               rows: List<DataRow>.generate(
                 _currentResults.length,
-                    (index) {
+                (index) {
                   if (index < _currentResults.length) {
-                  Map<String, dynamic> deliveryData =
-                  _currentResults[index].data() as Map<String, dynamic>;
+                    Map<String, dynamic> deliveryData =
+                        _currentResults[index].data() as Map<String, dynamic>;
 
-                  DateTime dateTime = deliveryData['date'].toDate();
-                  String formattedDate =
-                  DateFormat('yyyyMMdd').format(dateTime);
-                  String formattedTime = DateFormat('HH:mm').format(dateTime);
+                    DateTime dateTime = deliveryData['date'].toDate();
+                    String formattedDate =
+                        DateFormat('yyyyMMdd').format(dateTime);
+                    String formattedTime = DateFormat('HH:mm').format(dateTime);
 
-                  return DataRow(
-                    cells: [
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child: Text(formattedDate),
+                    return DataRow(
+                      cells: [
+                        DataCell(
+                          SizedBox(
+                            width: 120,
+                            child: Text(formattedDate),
+                          ),
                         ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child: Text(formattedTime),
+                        DataCell(
+                          SizedBox(
+                            width: 120,
+                            child: Text(formattedTime),
+                          ),
                         ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child: Text(deliveryData['branchCode'].toString()),
+                        DataCell(
+                          SizedBox(
+                            width: 120,
+                            child: Text(deliveryData['branchCode'].toString()),
+                          ),
                         ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child: Text(deliveryData['userCode'].toString()),
+                        DataCell(
+                          SizedBox(
+                            width: 120,
+                            child: Text(deliveryData['userCode'].toString()),
+                          ),
                         ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child: Text(deliveryData['userName'].toString()),
+                        DataCell(
+                          SizedBox(
+                            width: 120,
+                            child: Text(deliveryData['userName'].toString()),
+                          ),
                         ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 120,
-                          child:
-                          Text(deliveryData['deliveryPort'].toString()),
+                        DataCell(
+                          SizedBox(
+                            width: 120,
+                            child:
+                                Text(deliveryData['deliveryPort'].toString()),
+                          ),
                         ),
-                      ),
-                    ],
-                  );} else {
-                    return const DataRow(cells: []); // インデックスが範囲外の場合は空のDataRowを返す
+                      ],
+                    );
+                  } else {
+                    return const DataRow(
+                        cells: []); // インデックスが範囲外の場合は空のDataRowを返す
                   }
                 },
               ),
