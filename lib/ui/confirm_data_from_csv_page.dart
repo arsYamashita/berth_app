@@ -162,7 +162,7 @@ class InputedDataList extends StatelessWidget {
                             DateFormat("HHmm").format(datas[index].date)),
                         buildCellData(datas[index].userCode),
                         buildCellData(datas[index].userName),
-                        buildCellData(datas[index].branchCode),
+                        buildCellData(datas[index].branchName),
                         buildCellData(datas[index].deliveryPort),
                       ],
                     ),
