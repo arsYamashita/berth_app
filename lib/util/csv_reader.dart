@@ -72,6 +72,16 @@ class CsvReader {
       _csvDataResult.setErrorMessage('CSVファイルが空です');
       return _csvDataResult;
     }
+    // 一行目がヘッダーではない場合
+    if (lines[0].replaceAll('\r', '') != '拠点CD,日付,時間,取引先CD,納品口') {
+      _csvDataResult.setErrorMessage('CSVファイルのヘッダーが不正です');
+      return _csvDataResult;
+    }
+    //ヘッダー以外の行が存在しない場合
+    if (lines.length == 1) {
+      _csvDataResult.setErrorMessage('CSVファイルにデータが存在しません');
+      return _csvDataResult;
+    }
     //1行目を無視する
     for (int i = 1; i < lines.length; i++) {
       //改行コードを削除
