@@ -43,7 +43,7 @@ class ImportCsvController extends StateNotifier<ImportCsvState> {
       return "";
     }
     final _csvBytes = this.csvData!.files.single.bytes;
-    return utf8.decode(_csvBytes!);
+    return latin1.decode(_csvBytes!);
   }
 
   Future<CsvDataResult> readCsvData() {
