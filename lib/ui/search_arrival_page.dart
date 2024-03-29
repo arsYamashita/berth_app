@@ -132,6 +132,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
   late List<DocumentSnapshot> _currentResults;
   late int _currentPage;
   late int _totalPages;
+  bool isInitialState = true;
   static const int _itemsPerPage = 100;
 
   @override
@@ -427,6 +428,7 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
                       );
                       // _searchResultsと_totalPagesを更新
                       setState(() {
+                        isInitialState = false;
                         _searchResults = results;
                         _currentPage = 1; // ページ数を1にリセット
                         _newUpdateResults(); // ここで_updateResultsを呼び出す
@@ -449,8 +451,8 @@ class _SearchArrivalPageState extends State<SearchArrivalPage> {
               color: Colors.grey,
             ),
             _searchResults.isEmpty
-                ? const Center(
-                    child: Text('No results found.'),
+                ? Center(
+                    child: Text(isInitialState ? '' : 'No results found'),
                   )
                 : DeliverySearchResultTable(
                     key: _searchResultTableKey,
