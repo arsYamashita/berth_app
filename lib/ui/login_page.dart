@@ -16,7 +16,7 @@ class LoginPage extends StatelessWidget {
       appBar: AppBar(),
       body: HookConsumer(builder: (context, ref, _) {
         final notifier = ref.read(loginProvider.notifier);
-        final _formkey = GlobalKey<FormState>();
+        final formKey = GlobalKey<FormState>();
         ref.watch(loginProvider.notifier);
 
         return Padding(
@@ -24,7 +24,7 @@ class LoginPage extends StatelessWidget {
               horizontal: SizeConfig.blockSizeHorizontal * 10,
               vertical: SizeConfig.blockSizeVertical * 10),
           child: Form(
-            key: _formkey,
+            key: formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -43,28 +43,7 @@ class LoginPage extends StatelessWidget {
                   title: "パスワード",
                   hint: Dummy.passHint,
                 ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white),
-                  onPressed: () async {
-                    if (_formkey.currentState!.validate()) {
-                      await notifier.signIn().then((value) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(content: Text(value)));
-                        //authの結果によって画面遷移
-                        if (value == "ログインしました") {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SelectTaskPage()));
-                        }
-                      });
-                    }
-                  },
-                  child: const Text("ログイン"),
-                ),
+                LoginButton(formKey: formKey, notifier: notifier),
               ],
             ),
           ),
@@ -74,8 +53,43 @@ class LoginPage extends StatelessWidget {
   }
 }
 
+class LoginButton extends StatelessWidget {
+  const LoginButton({
+    super.key,
+    required this.formKey,
+    required this.notifier,
+  });
+
+  final GlobalKey<FormState> formKey;
+  final LoginController notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
+      onPressed: () async {
+        if (formKey.currentState!.validate()) {
+          await notifier.signIn().then((value) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(value)));
+            //authの結果によって画面遷移
+            if (value == "ログインしました") {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SelectTaskPage()));
+            }
+          });
+        }
+      },
+      child: const Text("ログイン"),
+    );
+  }
+}
+
 class _LoginForm extends StatelessWidget {
-  _LoginForm(
+  const _LoginForm(
       {super.key,
       required this.title,
       required this.hint,

@@ -52,11 +52,11 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
         try {
           //予約通知用のデータを作成
           notifications
-              .where(
-                  (element) => element.userCode == data.csvData[i].userCode)
-              .isEmpty
+                  .where(
+                      (element) => element.userCode == data.csvData[i].userCode)
+                  .isEmpty
               ? notifications.add(
-              ReservationNotification(userCode: data.csvData[i].userCode))
+                  ReservationNotification(userCode: data.csvData[i].userCode))
               : null;
           //予約IDを格納
           notifications
@@ -73,22 +73,18 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
             'deliveryPort': data.csvData[i].deliveryPort,
             'userName': data.csvData[i].userName,
           }).onError(
-                  (error, stackTrace) => throw Exception([error, stackTrace]));
+              (error, stackTrace) => throw Exception([error, stackTrace]));
         } catch (e, s) {
-          ref
-              .read(dialogStateProvider.notifier)
-              .state =
-          await AsyncValue.error(e, s);
+          ref.read(dialogStateProvider.notifier).state =
+              await AsyncValue.error(e, s);
           return;
         }
       }
 
       //全データ登録したことを通知
       print('全データ登録したことを通知');
-      ref
-          .read(dialogStateProvider.notifier)
-          .state =
-      await const AsyncValue.data(null);
+      ref.read(dialogStateProvider.notifier).state =
+          await const AsyncValue.data(null);
       //各ユーザーのfcmトークンをセット
       await fetchFcmToken(notifications);
 
@@ -104,7 +100,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
     for (var element in notifications) {
       final userCode = element.userCode;
       final userSnapshot =
-      await mFirestore.collection('users').doc(userCode).get();
+          await mFirestore.collection('users').doc(userCode).get();
       //ユーザーコードに紐づくfcmトークンを取得（配列型）
       final fcmToken = (userSnapshot['fcmToken'] as List<dynamic>)
           .map((token) => token.toString())
@@ -121,10 +117,9 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
     // HTTPリクエストヘッダー
     final headers = {
       'Authorization':
-      'key=AAAAQQt6HGM:APA91bHVEwYFOZTf4bLxa3wLMptpGL9G5TcPH3l-8CvRRKDPRWvrqhsxBhyWIoOdg0fmjSMGdO_rB7cFB8PZfqwkm_FQdfPDrKcuwioSW6VCiduZlB3HDY6V9FyAoHCqlntlqxDaidTv',
+          'key=AAAAQQt6HGM:APA91bHVEwYFOZTf4bLxa3wLMptpGL9G5TcPH3l-8CvRRKDPRWvrqhsxBhyWIoOdg0fmjSMGdO_rB7cFB8PZfqwkm_FQdfPDrKcuwioSW6VCiduZlB3HDY6V9FyAoHCqlntlqxDaidTv',
       'Content-Type': 'application/json',
     };
-
 
     //業者ごとにまとめて通知する。
     for (var notification in notifications) {
@@ -161,22 +156,27 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
   }
 
   Future<String> getAccessToken() async {
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('authKey')
+        .doc('service-account-key')
+        .get();
+    final credentials = ServiceAccountCredentials.fromJson(
+        json.decode(userSnapshot['service-account-key']));
+    // 有効期限の短い OAuth 2.0 アクセス トークンを取得
+    final client = await clientViaServiceAccount(
+        credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
+    final accessToken = await client.credentials.accessToken;
 
-    final userSnapshot =
-    await FirebaseFirestore.instance.collection('authKey').doc('service-account-key').get();
-      final credentials = ServiceAccountCredentials.fromJson(json.decode(userSnapshot['service-account-key']));
-      // 有効期限の短い OAuth 2.0 アクセス トークンを取得
-      final client = await clientViaServiceAccount(credentials, ['https://www.googleapis.com/auth/firebase.messaging']);
-      final accessToken = await client.credentials.accessToken;
-
-      return accessToken.data;
+    return accessToken.data;
   }
 
-  Future<void> sendFCMNotificationV1(List<ReservationNotification> notifications) async {
+  Future<void> sendFCMNotificationV1(
+      List<ReservationNotification> notifications) async {
     final accessToken = await getAccessToken();
     final project_id = DefaultFirebaseOptions.web.projectId;
 
-    final url = Uri.parse('https://fcm.googleapis.com/v1/projects/$project_id/messages:send');
+    final url = Uri.parse(
+        'https://fcm.googleapis.com/v1/projects/$project_id/messages:send');
     final headers = {
       'Authorization': 'Bearer $accessToken',
       'Content-Type': 'application/json',

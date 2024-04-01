@@ -35,7 +35,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text("エラーが発生しました"),
+                          const Text("エラーが発生しました"),
                           SizedBox(height: SizeConfig.blockSizeVertical * 2),
                           Text("エラー内容：${snapshot.data!.errorMessages}"),
                         ],
@@ -67,7 +67,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                                   context: context,
                                   barrierDismissible: false,
                                   builder: (context) {
-                                    return _RegistrationDialog();
+                                    return const _RegistrationDialog();
                                   });
                               notifier.registerData();
                             },
@@ -77,7 +77,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                     ],
                   );
                 } else {
-                  return Center(child: const CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
               });
         }),
@@ -137,7 +137,7 @@ class InputedDataList extends StatelessWidget {
                   return Container(
                     padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.blockSizeVertical * 1),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                         border: Border(
                       bottom: BorderSide(color: Colors.grey),
                     )),
@@ -212,7 +212,7 @@ class _RegistrationDialog extends ConsumerWidget {
       ),
       actions: [
         dialogState.isLoading
-            ? SizedBox()
+            ? const SizedBox()
             : ElevatedButton(
                 onPressed: () {
                   // ダイアログを閉じて前の画面に戻る

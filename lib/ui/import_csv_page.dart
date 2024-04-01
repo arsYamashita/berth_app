@@ -1,12 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:berth_app/controller/confirm_data_controller.dart';
 import 'package:berth_app/controller/import_csv_controller.dart';
 import 'package:berth_app/ui/confirm_data_from_csv_page.dart';
 import 'package:berth_app/util/size_config.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -24,11 +19,11 @@ class ImportCSVPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("CSVをインポートしてください"),
+            const Text("CSVをインポートしてください"),
             SizedBox(height: SizeConfig.blockSizeVertical * 2),
-            _ImportCsvWidget(),
+            const _ImportCsvWidget(),
             SizedBox(height: SizeConfig.blockSizeVertical * 2),
-            _RegistrationButton()
+            const _RegistrationButton()
           ],
         ),
       ),
@@ -69,9 +64,9 @@ class _RegistrationButton extends StatelessWidget {
                   builder: (context) => ProviderScope(overrides: [
                         confirmDataProvider.overrideWithProvider(
                             confirmDataProviderFamily(notifier.getCsvText()))
-                      ], child: ConfirmDataFromCsvPage())));
+                      ], child: const ConfirmDataFromCsvPage())));
             },
-            child: Text("登録する"),
+            child: const Text("登録する"),
           );
         }),
       ),
@@ -124,7 +119,7 @@ class _ImportCsvWidget extends StatelessWidget {
                   onPressed: () async {
                     notifier.pickFile();
                   },
-                  child: Text("ファイルを選択"),
+                  child: const Text("ファイルを選択"),
                 ),
               ),
             )
