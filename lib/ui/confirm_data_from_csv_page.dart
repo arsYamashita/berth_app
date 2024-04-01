@@ -9,20 +9,7 @@ import '../model/reservation.dart';
 import '../util/size_config.dart';
 
 class ConfirmDataFromCsvPage extends StatelessWidget {
-  ConfirmDataFromCsvPage({super.key});
-  final labels = List<DataColumn>.generate(
-      5, (int index) => DataColumn(label: Text("ラベル$index")),
-      growable: false);
-
-  final values = List<DataRow>.generate(20, (int index) {
-    return DataRow(cells: [
-      DataCell(Text("山田$index郎")),
-      const DataCell(Text("男性")),
-      const DataCell(Text("2000/10/30")),
-      const DataCell(Text("東京都港区")),
-      const DataCell(Text("会社員")),
-    ]);
-  }, growable: false);
+  const ConfirmDataFromCsvPage({super.key});
 
   @override
   Widget build(BuildContext context) {
