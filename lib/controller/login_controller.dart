@@ -30,10 +30,16 @@ class LoginController extends StateNotifier<LoginState> {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: state.email, password: state.password);
-          
+
       return "ログインしました";
     } on FirebaseAuthException catch (e) {
-      return e.code;
+      String errorMessage = '';
+      if (e.code == 'invalid-email') {
+        errorMessage = 'メールアドレスが正しくありません';
+      } else if (e.code == 'invalid-credential') {
+        errorMessage = 'ログインできません';
+      }
+      return errorMessage;
     }
   }
 }
