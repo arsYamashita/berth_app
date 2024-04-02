@@ -79,6 +79,7 @@ class SearchArrivalPage extends HookConsumerWidget {
                   child: Text('取引先CD'),
                 ),
                 FilterInputForm(
+                    isUserCdForm: true,
                     onChanged: (value) => viewModel.setUserCode(value)),
               ],
             ),
@@ -121,26 +122,35 @@ class FilterInputForm extends StatelessWidget {
   const FilterInputForm({
     super.key,
     required this.onChanged,
+    this.isUserCdForm = false,
   });
   final ValueChanged<String> onChanged;
+  final bool isUserCdForm;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: TextField(
-        decoration: InputDecoration(
-          border: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.grey),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 0,
-          ),
+    final child = TextField(
+      decoration: InputDecoration(
+        border: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.grey),
+          borderRadius: BorderRadius.circular(5),
         ),
-        onChanged: (value) => onChanged,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 0,
+        ),
       ),
+      onChanged: (value) => onChanged,
     );
+
+    return isUserCdForm
+        ? SizedBox(
+            width: 150,
+            child: child,
+          )
+        : Expanded(
+            child: child,
+          );
   }
 }
 
