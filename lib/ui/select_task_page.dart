@@ -15,7 +15,7 @@ class SelectTaskPage extends StatelessWidget {
       appBar: AppBar(
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: () async {
               // ログアウト処理
               await FirebaseAuth.instance.signOut();
@@ -49,8 +49,7 @@ class SelectTaskPage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => SearchArrivalPage()),
+                  MaterialPageRoute(builder: (context) => SearchArrivalPage()),
                 );
               },
             ),

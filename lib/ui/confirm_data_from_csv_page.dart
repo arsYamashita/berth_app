@@ -9,20 +9,7 @@ import '../model/reservation.dart';
 import '../util/size_config.dart';
 
 class ConfirmDataFromCsvPage extends StatelessWidget {
-  ConfirmDataFromCsvPage({super.key});
-  final labels = List<DataColumn>.generate(
-      5, (int index) => DataColumn(label: Text("ラベル$index")),
-      growable: false);
-
-  final values = List<DataRow>.generate(20, (int index) {
-    return DataRow(cells: [
-      DataCell(Text("山田$index郎")),
-      const DataCell(Text("男性")),
-      const DataCell(Text("2000/10/30")),
-      const DataCell(Text("東京都港区")),
-      const DataCell(Text("会社員")),
-    ]);
-  }, growable: false);
+  const ConfirmDataFromCsvPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +35,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text("エラーが発生しました"),
+                          const Text("エラーが発生しました"),
                           SizedBox(height: SizeConfig.blockSizeVertical * 2),
                           Text("エラー内容：${snapshot.data!.errorMessages}"),
                         ],
@@ -80,7 +67,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                                   context: context,
                                   barrierDismissible: false,
                                   builder: (context) {
-                                    return _RegistrationDialog();
+                                    return const _RegistrationDialog();
                                   });
                               notifier.registerData();
                             },
@@ -90,7 +77,7 @@ class ConfirmDataFromCsvPage extends StatelessWidget {
                     ],
                   );
                 } else {
-                  return Center(child: const CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
               });
         }),
@@ -150,7 +137,7 @@ class InputedDataList extends StatelessWidget {
                   return Container(
                     padding: EdgeInsets.symmetric(
                         vertical: SizeConfig.blockSizeVertical * 1),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                         border: Border(
                       bottom: BorderSide(color: Colors.grey),
                     )),
@@ -225,7 +212,7 @@ class _RegistrationDialog extends ConsumerWidget {
       ),
       actions: [
         dialogState.isLoading
-            ? SizedBox()
+            ? const SizedBox()
             : ElevatedButton(
                 onPressed: () {
                   // ダイアログを閉じて前の画面に戻る
