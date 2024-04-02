@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_web_pagination/flutter_web_pagination.dart';
 
 class SearchArrivalPage extends HookConsumerWidget {
+  const SearchArrivalPage({super.key});
+
   @override
   Widget build(BuildContext context, ref) {
     final viewModel = ref.read(deliverySearchProvider);
@@ -43,23 +45,8 @@ class SearchArrivalPage extends HookConsumerWidget {
                   width: 80,
                   child: Text('センター'),
                 ),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 0,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      viewModel.setBranchCode(value);
-                    },
-                  ),
-                ),
+                FilterInputForm(
+                    onChanged: (value) => viewModel.setBranchCode(value)),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -69,57 +56,19 @@ class SearchArrivalPage extends HookConsumerWidget {
                   width: 80,
                   child: Text('配送日時'),
                 ),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 0,
-                      ),
-                    ),
-                    onChanged: (value) => viewModel.setDeliveryStartTime(value),
-                  ),
+                FilterInputForm(
+                  onChanged: (value) => viewModel.setDeliveryStartTime(value),
                 ),
                 const Text(' 〜 '),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 0,
-                      ),
-                    ),
-                    onChanged: (value) => viewModel.setDeliveryEndTime(value),
-                  ),
-                ),
+                FilterInputForm(
+                    onChanged: (value) => viewModel.setDeliveryEndTime(value)),
                 const SizedBox(width: 20),
                 const SizedBox(
                   width: 80,
                   child: Text('納品口'),
                 ),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 0,
-                      ),
-                    ),
-                    onChanged: (value) => viewModel.setDeliveryPort(value),
-                  ),
-                ),
+                FilterInputForm(
+                    onChanged: (value) => viewModel.setDeliveryPort(value)),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -129,22 +78,8 @@ class SearchArrivalPage extends HookConsumerWidget {
                   width: 80,
                   child: Text('取引先CD'),
                 ),
-                SizedBox(
-                  width: 150,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 0,
-                      ),
-                    ),
-                    onChanged: (value) => viewModel.setUserCode(value),
-                  ),
-                ),
+                FilterInputForm(
+                    onChanged: (value) => viewModel.setUserCode(value)),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -177,6 +112,33 @@ class SearchArrivalPage extends HookConsumerWidget {
                   ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FilterInputForm extends StatelessWidget {
+  const FilterInputForm({
+    super.key,
+    required this.onChanged,
+  });
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: TextField(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.grey),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 0,
+          ),
+        ),
+        onChanged: (value) => onChanged,
       ),
     );
   }
