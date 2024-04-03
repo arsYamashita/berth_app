@@ -57,13 +57,14 @@ class _RegistrationButton extends StatelessWidget {
               ),
             ),
             onPressed: () {
-              if (notifier.getCsvText().isEmpty) {
+              String csvText = notifier.getCsvText();
+              if (csvText.isEmpty) {
                 return;
               }
               Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => ProviderScope(overrides: [
                         confirmDataProvider.overrideWithProvider(
-                            confirmDataProviderFamily(notifier.getCsvText()))
+                            confirmDataProviderFamily(csvText))
                       ], child: const ConfirmDataFromCsvPage())));
             },
             child: const Text("登録する"),

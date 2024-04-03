@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:berth_app/ui/confirm_data_from_csv_page.dart';
 import 'package:berth_app/util/csv_reader.dart';
+import 'package:euc/jis.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -43,19 +44,16 @@ class ImportCsvController extends StateNotifier<ImportCsvState> {
       return "";
     }
     final _csvBytes = this.csvData!.files.single.bytes;
-    return latin1.decode(_csvBytes!);
-  }
-
-  Future<CsvDataResult> readCsvData() {
-    // CSVデータを読み込む処理
-    if (this.csvData == null) {
-      return Future.value(CsvDataResult());
+    String decodedCsv = "";
+    try {
+      // UTF-8でデコードを試みる
+      decodedCsv = utf8.decode(_csvBytes!);
+    } catch (_) {
+      // UTF-8でのデコードに失敗した場合はShift-JISでデコードを試みる
+      // Shift-JISでデコードを試みる
+      decodedCsv = ShiftJIS().decode(_csvBytes!);
     }
-    final _csvBytes = this.csvData!.files.single.bytes;
-    final _csvText = utf8.decode(_csvBytes!);
-    final csvResult = CsvReader().getCsvDataResult(_csvText);
-
-    return csvResult;
+    return decodedCsv;
   }
 
   void _inputFileName(String fileName) {

@@ -47,6 +47,7 @@ dependencies:
   intl: ^0.17.0
   flutter_web_pagination: ^0.0.3
   googleapis_auth: ^1.5.0
+  euc: ^1.0.6+8
 
 dev_dependencies:
   flutter_test:
