@@ -72,7 +72,7 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
             'userCode': data.csvData[i].userCode,
             'deliveryPort': data.csvData[i].deliveryPort,
             'userName': data.csvData[i].userName,
-            'isNew': false,
+            'isNew': true,
           }).onError(
               (error, stackTrace) => throw Exception([error, stackTrace]));
         } catch (e, s) {
