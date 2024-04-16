@@ -84,7 +84,11 @@ class _TaskButton extends StatelessWidget {
               backgroundColor: isInputCsv ? Colors.orange : Colors.blue,
               foregroundColor: Colors.white),
           onPressed: onPressed,
-          child: Text(title),
+          child: Text(title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+            ),),
         ),
       ),
     );

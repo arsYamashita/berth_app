@@ -28,6 +28,12 @@ class LoginPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text("納品コントロール",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30,
+                  ),),
+                SizedBox(height: 30),
                 _LoginForm(
                   onChanged: (value) {
                     notifier.inputEmail(value);
