@@ -110,52 +110,6 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
     }
   }
 
-  Future<void> sendFCMNotification(
-      List<ReservationNotification> notifications) async {
-    // FCMサーバーへのエンドポイントURL
-    final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
-
-    // HTTPリクエストヘッダー
-    final headers = {
-      'Authorization':
-          'key=AAAAQQt6HGM:APA91bHVEwYFOZTf4bLxa3wLMptpGL9G5TcPH3l-8CvRRKDPRWvrqhsxBhyWIoOdg0fmjSMGdO_rB7cFB8PZfqwkm_FQdfPDrKcuwioSW6VCiduZlB3HDY6V9FyAoHCqlntlqxDaidTv',
-      'Content-Type': 'application/json',
-    };
-
-    //業者ごとにまとめて通知する。
-    for (var notification in notifications) {
-      // 送信するメッセージデータ
-      for (var fcmToken in notification.fcmTokens) {
-        final messageData = {
-          'notification': {
-            'title': '入荷コントロール',
-            'body': '新しい入荷予約が確定しました。',
-          },
-          'data': {
-            'reservations': notification.reservationIDs,
-            'key2': 'value2',
-          },
-          //実機端末のfcmトークン
-          'to': fcmToken,
-        };
-        // HTTP POSTリクエストの送信
-        final response = await http.post(url,
-            headers: headers,
-            body: jsonEncode(messageData),
-            encoding: Encoding.getByName('utf-8'));
-
-        // レスポンスの確認
-        if (response.statusCode == 200) {
-          print('FCM通知が正常に送信されました');
-          print('レスポンスボディ: ${response.body}');
-        } else {
-          print('FCM通知の送信に失敗しました: ${response.statusCode}');
-          print('レスポンスボディ: ${response.body}');
-        }
-      }
-    }
-  }
-
   Future<String> getAccessToken() async {
     final userSnapshot = await FirebaseFirestore.instance
         .collection('authKey')
@@ -191,8 +145,8 @@ class ConfirmDataController extends StateNotifier<Future<CsvDataResult>> {
           'message': {
             'token': fcmToken,
             'notification': {
-              'title': '入荷コントロール',
-              'body': '新しい入荷予約が確定しました。',
+              'title': 'コメリバース予約システム',
+              'body': '新しい納品予定が追加されました。',
             },
             'data': {
               'key1': 'value1', // ここに必要なデータを追加
