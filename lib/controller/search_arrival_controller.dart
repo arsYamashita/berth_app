@@ -7,7 +7,7 @@ import '../model/delivery_search_service.dart';
 import '../ui/search_arrival_page.dart';
 
 final deliverySearchProvider =
-    ChangeNotifierProvider((ref) => DeliverySearchViewModel());
+    ChangeNotifierProvider.autoDispose((ref) => DeliverySearchViewModel());
 
 class DeliverySearchViewModel extends ChangeNotifier {
   final DeliverySearchService _service = DeliverySearchService();
