@@ -31,21 +31,6 @@ class DeliverySearchViewModel extends ChangeNotifier {
 
   List<DocumentSnapshot> get searchResults => searchResult;
 
-  Future<void> searchDeliveries() async {
-    if (_deliveryStartDate != null && _deliveryEndDate != null) {
-      searchResult = await _service.searchDeliveries(
-        deliveryStartDate: _deliveryStartDate.toString(),
-        deliveryEndDate: _deliveryEndDate.toString(),
-        branchCode: _branchCode,
-        deliveryStartTime: _deliveryStartTime,
-        deliveryEndTime: _deliveryEndTime,
-        userCode: _userCode,
-        deliveryPort: _deliveryPort,
-      );
-    }
-    notifyListeners();
-  }
-
   void pickDeliveryDate(BuildContext context, {bool isStart = true}) async {
     final DateTime? date = await showDatePicker(
       context: context,
@@ -89,6 +74,7 @@ class DeliverySearchViewModel extends ChangeNotifier {
       searchResult = results;
       _currentPage = 1; // ページ数を1にリセット
       newUpdateResults(); // ここで_updateResultsを呼び出す
+      print(_branchCode);
     } else {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text("開始日と終了日は必須項目です")));
