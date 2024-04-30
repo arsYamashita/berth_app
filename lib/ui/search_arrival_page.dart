@@ -96,7 +96,7 @@ class SearchArrivalPage extends HookConsumerWidget {
             const SizedBox(height: 16.0),
             const Divider(
               height: 50,
-              thickness: 5,
+              // thickness: 5,
               indent: 0,
               endIndent: 0,
               color: Colors.grey,
@@ -140,7 +140,7 @@ class FilterInputForm extends StatelessWidget {
           vertical: 0,
         ),
       ),
-      onChanged: (value) => onChanged,
+      onChanged: onChanged,
     );
 
     return isUserCdForm
